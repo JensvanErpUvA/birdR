@@ -1,6 +1,8 @@
 ## code to prepare `DATASET` dataset goes here
 files <- list.files('/Users/jedgroev/surfdrive/Shared/Methodology Paper data',full.names = T)
 files <- files[!grepl('.Rmd',files)]
+
+# NOTE THAT LARGE DATASETS CANNOT BE SUBMITTED TO CRAN
 # shps
 turbines <- sf::st_read(files[grepl('.shp',files)])
 usethis::use_data(turbines, overwrite = TRUE)
