@@ -136,82 +136,26 @@ turbines[,geometry:=st_transform(geometry,crs=wgs84_epsg)]
 #2.1 Sub-setting based on prior knowledge
 
 ##2.1.1 Spatial filtering
-We apply the spatial filter by setting up an area of inclusion (AoI) geometry, which will be used to identify tracks outside of it to be removed
-This part is generally required, and setting up the AoI can be adopted into a function (minus the turbines, which is too specific imo)
 
-#############################################
-FUNCTION
-Input:
-- Radar lat and lon (2 numerics in a 1x2 vector)
-- Minimum and maximum distance (2numerics in a 1x2 vector, minimum default = 0)
-- Blocked corners (2 numerics per corner in a ?x2 vector, default)
-- Local epsg
-Output:
-- sf-feature of area of inclusion (polygon or multi-polygon)
-Ideally the function should be able to work using only the radar coordinates and the maximum distance
-Example: rr_get_aoi <- function(r_lat, r_lon, mid=0, mad, b_corners=NA, loc_epsg){<code> return(aoi)}
+We apply the spatial filter by setting up an area of inclusion (AoI) geometry, which will be used to identify tracks outside of it to be removed. Three different filters can be used: 
+- inclusion_ring: include region between a minimum and maximum distance from the radar location. 
+- exclusion_angle: 
+- exclusion_location:
 
-First we set a minimum and maximum distance around the radar
+This part is generally required, and setting up the AoI can be adopted into a function (minus the turbines, which is too specific imo). 
+
+
 ```{r min_mad}
-## Create geometry of radar coordinates
-radar_loc <- st_sfc(st_point(c(r_lon, r_lat)),crs=wgs84_epsg)
-
-## Use the set minimum and maximum distance to create a "donut" around the radar geometry
-area_of_inclusion <- st_difference(st_buffer(st_transform(radar_loc, crs=loc_epsg), dist=mad),
-                                   st_buffer(st_transform(radar_loc, crs=loc_epsg), dist=mid))
-```
-
-Secondly we remove corners we expect has structural interference
-Here we have two types of interference: 
-1. The turbine the radar is situated on blocks one side of the radar window
-2. The area overlapping with the vertical radar beam, which mostly has mixed tracks we did not include in this study. Therefore this area is not relevant here
-```{r blocked_corners}
-## We remove the blocked corners by creating a triangle using the radar coordinates, the corner angles, and  maximum distance
-
-## Calculate a length of the triangle legs much larger than mad
-triangle_leg <- 5*mad 
-## Loop over the blocked corners
-for (i in 1:nrow(b_corners)){
-  ## Angles between which the radar is blocked by its turbine (in [Rad])
-  triangle_angles <- c(b_corners[i,1]/180*pi, b_corners[i,2]/180*pi)
-  
-  ## Get base point of triangle from radar coordinates (local projection)
-  triangle_base <- st_transform(radar_loc, crs=loc_epsg)
-  ## Make a triangle using the radar coordinates, gap angles and leg length
-  triangle_top <- triangle_base + c(sin(triangle_angles[2])*triangle_leg, cos(triangle_angles[2])*triangle_leg)
-  triangle_side <- triangle_base + c(sin(triangle_angles[1])*triangle_leg, cos(triangle_angles[1])*triangle_leg)
-  triangle_coordinates <- rbind(c(st_coordinates(triangle_base)[[1]], st_coordinates(triangle_base)[[2]]),
-                                c(st_coordinates(triangle_top)[[1]], st_coordinates(triangle_top)[[2]]),
-                                c(st_coordinates(triangle_side)[[1]], st_coordinates(triangle_side)[[2]]),
-                                c(st_coordinates(triangle_base)[[1]], st_coordinates(triangle_base)[[2]]))
-  
-  ## Create a geometry of the triangle corners
-  blocked_triangle <-  st_sfc(st_polygon(list(triangle_coordinates)), crs=loc_epsg)
-  
-  ## Substractthe triangle from the donut
-  area_of_inclusion <- st_difference(area_of_inclusion, blocked_triangle)
-}
-```
-
-FUNCTION END
-#############################################
-
-
-2. The other turbines can create local false positives around their location 
-```{r local_clutter}
-## Add a buffer around each turbine
-turbines_buff <- st_buffer(st_transform(st_sfc(st_multipoint(st_coordinates(turbines[,geometry])),crs=wgs84_epsg), crs=loc_epsg),
-                               dist=turb_exclusion_rad)
-
-## Substract the turbine areas
-area_of_inclusion <- st_difference(area_of_inclusion, turbines_buff)
+area_of_inclusion <-  roi(location= c(r_lon, r_lat),
+                          inclusion_donut=c(mad,mid),
+                          exclusion_angle=b_corners,
+                          exclusion_location=turbines,
+                          exclusion_location_buffer=turb_exclusion_rad,
+                          crs_loc=loc_epsg)
 
 ## Add a tag to the turbines for whether they are in the proximity of the radar (bbox of AoI) mostly for plotting
-aoi_bbox <- st_as_sfc(st_bbox(area_of_inclusion), crs=loc_epsg)
+aoi_bbox <- st_as_sfc(st_bbox(aoi), crs=loc_epsg)
 turbines[,near_aoi:=sapply(st_transform(turbines[,geometry],crs=loc_epsg),st_within,y=aoi_bbox, sparse=FALSE)]
-
-## Transform the AoI  to lon/lat coordinates
-area_of_inclusion <- st_transform(area_of_inclusion, crs=wgs84_epsg)
 ```
 
 ```{r visualize_inclusion}
@@ -241,163 +185,34 @@ We have two track-specific filters
 
 At this point we need to calculate several track parameters
 ```{r get_parameters}
-## In RR system track durations per plot are given as a long character string, pull apart and make into list of numbers
-tracks_step1[,traj_time:=lapply(
-  strsplit(
-    substr(trajectory_time,2,nchar(trajectory_time)-1),
-    split = ','),
-  as.double)
-]
-tracks_step1[,"trajectory_time":=NULL]
-setnames(tracks_step1,"traj_time","trajectory_time")
-
-## Numer of points in the track
-tracks_step1[,nr_of_points := sapply(trajectory_time, length)]
-## Duration (seconds)
-tracks_step1[,duration := as.numeric(timestamp_end-timestamp_start)] 
-## Length (metres)
-tracks_step1[,length := as.numeric(st_length(st_transform(trajectory, crs=loc_epsg)))]
-## Groundspeed (metres per second)
-tracks_step1[,groundspeed := length/duration]
-
-## Displacement between start and end of the track (m)
-get_displacement <- function(trajectory, nr_of_points){
-  longs <- st_coordinates(trajectory)[c(1,nr_of_points),1]
-  lats <- st_coordinates(trajectory)[c(1,nr_of_points),2]
-  
-  return(deg.dist(longs[1], lats[1], longs[2], lats[2])*1000)
-}
-tracks_step1[,displacement := mapply(get_displacement, trajectory, nr_of_points)]
-
-## Direction (degrees North)
-get_direction <- function(trajectory, nr_of_points){
-  longs <- st_coordinates(trajectory)[c(1,nr_of_points),1]
-  lats<- st_coordinates(trajectory)[c(1,nr_of_points),2]
-  
-  return(bearingRhumb(c(longs[1], lats[1]), c(longs[2], lats[2]))/180*pi)
-}
-
-tracks_step1[,direction := mapply(get_direction, trajectory, nr_of_points)]
+tracks_step1 <- movement(TRACKS=tracks_step1,
+                         VAR=c('n','duration', 'length', 'groundspeed', 'displacement', 'direction','dot'), 
+                         crs=loc_epsg)
 ```
 
 Minimum and maximum airspeed
 Firstly we will look at the average airspeed of each track, and filter airspeeds lower and higher than biologically relevant.
 
 ```{r add_wind_info}
-## Load in the wind data
-ERA5_database <- fread(ERA5_filename)
-
-## Make date_time into POSIXct: 
-ERA5_database[,date_time:=ymd_hms(date_time, tz="UTC")]
-
-## To add weather conditions for each track, calculate the rounded hour of the half-way point of each track first
-tracks_step1[,nearest_hour:=round_date((timestamp_start+0.5*duration),unit="hours")]
-## Create exception for last hour in the dataset is the weather data holds the same 
-tracks_step1[!(nearest_hour %in% ERA5_database$date_time), nearest_hour:=ERA5_database$date_time[nrow(ERA5_database)]]
-
-## Add wind conditions (in this case U and V component at 10m ASL) to the tracks based on their timestamp
-tracks_step1 <- tracks_step1[ERA5_database[,c("date_time","U10m","V10m")], on=.(nearest_hour=date_time)]
-## Remove duplicate rows caused by hours without tracks (but with wind data available)
-tracks_step1 <- tracks_step1[!is.na(id),]
-tracks_step1[,"nearest_hour":=NULL]
+tracks_step1 <- annotation(TRACKS=tracks_step1,
+                           ERA=era,
+                           VAR=c("U10m","V10m"),
+                           unit="hours")
 ```
 
-Option for a functions here: calculating airspeed for tracks (more than the actual filter)
-
-#############################################
-FUNCTION
-Input:
-- average groundspeed & track direction
-- windspeed/direction OR wind u- and v-component
-Output:
-- average airspeed 
-Basic functionality should take u- and v-component plus average groundspeed & track direction, and deliver average airspeed.
-Example: rr_get_airspeed <- function(av_groundspeed, direction, wind_u, wind_v){<code> return(av_airspeed)}
-```{r calculate_airspeed}
-## Calculate total displacement on the x and y axis from the average groundspeed and direction of each track
-tracks_step1[,disp_x:=groundspeed*sin(direction)][,disp_y:=groundspeed*cos(direction)]
-
-## Calculate total displacement relative to the air  for each track
-tracks_step1[,air_x:=disp_x-U10m][,air_y:=disp_y-V10m]
-
-## Calculate average airspeed from total air displacement on both x- and y-axis
-tracks_step1[,airspeed:=sqrt((air_x^2) + (air_y^2))]
-
-## Remove temporary data columns now obsolete
-tracks_step1[,c("disp_x","disp_y","air_x","air_y"):=NULL]
-```
-FUNCTION END
-#############################################
-
-```{r airspeed_filter}
+```{r calculate_filter_airspeed}
+tracks_step1[,airspeed := mapply(get_airspeed, groundspeed, direction, U10m, V10m)]
 tracks_step1 <- tracks_step1[airspeed>=min_airspeed & airspeed<=max_airspeed,]
 ```
 
-Non-biological movement
+##2.1.3 Non-biological movement
+
 Secondly we identify non-biological movement (low displacement over time, or DoT) which is often related to clutter tracks
 The threshold for what DoT is considered too low has to be set manually by the research through visually inspecting the data.
 
-In This function first DoT should be calculated, then several percentiles should be retrieved and visualized.
-
-#############################################
-FUNCTION
-Input:
-- displacement
-- track duration
-- percentile range
-Output:
-- DoT
-- visualizations of DoT percentiles
-Basic functionality should calculate DoT and visualize percentiles
-
-Example: rr_get_dot_percs <- function(displacement, duration, dot_percs){<code> return(dot)}
 ```{r dot_threshold_calculations_visualizations}
-## Calculate displacement over time [m/s]
-tracks_step1[,dot:=displacement/duration]
-
-## Get a number of lower percentiles for visual inspection
-dot_perc_vals <- quantile(tracks_step1[,dot], probs=dot_percs)
-
-## Get the tracks included in all different percentiles (minus the previous percentile, to get newly identified tracks only)
-clutTracks1 <-tracks_step1[dot <= dot_perc_vals["0.2%"],]
-clutTracks2 <-tracks_step1[dot <= dot_perc_vals["0.4%"],]
-clutTracks3 <-tracks_step1[dot <= dot_perc_vals["0.6%"],]
-clutTracks4 <-tracks_step1[dot <= dot_perc_vals["0.8%"],]
-clutTracks5 <-tracks_step1[dot <= dot_perc_vals["1%"],]
-clutTracks6 <-tracks_step1[dot <= dot_perc_vals["1.2%"],]
-clutTracks7 <-tracks_step1[dot <= dot_perc_vals["1.4%"],]
-clutTracks8 <-tracks_step1[dot <= dot_perc_vals["1.6%"],]
-clutTracks9 <-tracks_step1[dot <= dot_perc_vals["1.8%"],]
-clutTracks10 <-tracks_step1[dot <= dot_perc_vals["2%"],]
-
-clutTracks10 <- clutTracks10[!(id %in% clutTracks9[,id]),]
-clutTracks9 <- clutTracks9[!(id %in% clutTracks8[,id]),]
-clutTracks8 <- clutTracks8[!(id %in% clutTracks7[,id]),]
-clutTracks7 <- clutTracks7[!(id %in% clutTracks6[,id]),]
-clutTracks6 <- clutTracks6[!(id %in% clutTracks5[,id]),]
-clutTracks5 <- clutTracks5[!(id %in% clutTracks4[,id]),]
-clutTracks4 <- clutTracks4[!(id %in% clutTracks3[,id]),]
-clutTracks3 <- clutTracks3[!(id %in% clutTracks2[,id]),]
-clutTracks2 <- clutTracks2[!(id %in% clutTracks1[,id]),]
-
-fig_data <- clutTracks5
-
-## Next we visualize each percentile to inspect
-## Subset if the dataset is too large
-if (nrow(fig_data)>5000){
-  fig_data <- sample_n(fig_data,5000)
-}
-
-## In this case, visualizing the location of the turbines can help provide context for what we are seeing.
-ggplot()+
-  geom_sf(data=st_zm(fig_data[,trajectory]))+
-  geom_sf(data=turbines[near_aoi==TRUE,geometry], lwd = 2, colour="red")+
-  labs(y = "Latitude", x = "Longitude",
-       title = "1st percentile of tracks")+
-  theme_minimal()
+dot_perc_vals <- get_dot_percs(track_step1$displacement,track_step1$duration, probs=seq(0.002,0.02,0.002), plot=T)
 ```
-FUNCTION END
-#############################################
 
 Based on the visualization, a stdp threshold has to be set
 ```{r set_dot_threshold}
@@ -491,7 +306,7 @@ tracks_step2[point_error==T, trajectory := mapply(fix_traj, trajectory, good_poi
 FUNCTION END 
 #############################################
 
-The other "fix" functions are for track variables other than the trajactory. 
+The other "fix" functions are for track variables other than the trajectory. 
 Might be added but have to think whether this info is always available or more RR data specific
 ``` {r fix_trajectories_extra}
 ## General fix for vectors
