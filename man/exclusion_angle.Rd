@@ -40,6 +40,7 @@ the corner angles, and  maximum distance.
 }
 \examples{
 
+\dontrun{
 angles <- c(287,30)
 distmax <- 2500 # distance in meters
 crs <- 23095 # metric CRS in which calculations are performed
@@ -56,5 +57,6 @@ ggplot() +
 geom_sf(data=blocked_triangles[[1]]) +
 geom_sf(data=blocked_triangles[[2]]) +
 geom_sf(data=st_sfc(st_point(location),crs=4326))
+}
 
 }

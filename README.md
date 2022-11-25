@@ -1,7 +1,7 @@
 # birdar
  
 A R package to filter birdradar datasets which have as minimal input a track table with the following columns. Several of these columns might be stored alternatively for different radars and require additional data preparation. For more documentation of functions see the [birdar](https://uva_ibed_ame.gitlab.io/robin_radar/birdar/) webpage. 
- 
+
 | column          | description                                                            | 
 |:---------------:|:----------------------------------------------------------------------:|
 | id              | unique_identifier                                                      |               
@@ -63,7 +63,8 @@ remotes::install_git("http://gitlabdeploytoken658893:z661w3sBPtdvSAHxLCLs@gitlab
 
 ### area of inclusion 
 
-see more examples in the manual.
+see more examples at [roi](https://uva_ibed_ame.gitlab.io/robin_radar/birdar/reference/roi.html)
+
 ```r
 # without exclusion areas 
 location <- c(4.185345, 52.42783)

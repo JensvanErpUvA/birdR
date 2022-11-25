@@ -45,6 +45,8 @@ the corner angles, and  maximum distance.
 }
 }
 \examples{
+
+\dontrun{
 # inclusion ring
 
 # location as vector
@@ -164,5 +166,5 @@ area_of_inclusion <-  roi(location=location,
                          excl_geom=list(turbines,location),
                          excl_buffer=list(weight,1000)
 )
-
+}
 }

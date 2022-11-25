@@ -24,6 +24,7 @@ Return the inclusion ring defined for the radar location and a minimum and maxim
 }
 \examples{
 
+\dontrun{
 distance <- c(2500,1000) # distance in meters
 crs <- 23095 # metric CRS in which calculations are performed
 
@@ -44,6 +45,6 @@ ggplot(ring) + geom_sf() + geom_sf(data=location)
 location <- st_sfc(st_point(c(444696.9, 5809144)),crs=crs)
 ring <- inclusion_ring(location, distance, crs)
 ggplot(ring) + geom_sf() + geom_sf(data=location)
-
+}
 
 }
