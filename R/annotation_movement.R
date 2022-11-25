@@ -65,7 +65,7 @@ get_airspeed <- function(groundspeed,
 
 #' @title movement
 #' @name movement
-#' @description annotate the trajectory with environmental data
+#' @description annotate the trajectory with movement data
 #'
 #' @param TRACKS sf object with tracks
 #' @param VAR vector with movement metrics to add to tracks

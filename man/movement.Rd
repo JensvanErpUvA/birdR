@@ -21,7 +21,7 @@ movement(
 returns annotated trajectories with movement information
 }
 \description{
-annotate the trajectory with environmental data
+annotate the trajectory with movement data
 }
 \details{
 
