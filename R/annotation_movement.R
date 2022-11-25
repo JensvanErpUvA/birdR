@@ -1,5 +1,9 @@
-
-#' displacement
+#'@importFrom data.table setnames
+#'@importFrom fossil deg.dist
+#'@importFrom geosphere bearingRhumb
+#'@importFrom sf st_coordinates st_length st_transform
+#'
+#'@title get_displacement
 #' @name get_displacement
 #' @description calculate displacement using a vector of track geometries and a vector with the number of locations in a track
 #'
@@ -15,8 +19,7 @@ get_displacement <- function(trajectory, n){ # NOTE this functions is not export
   return(deg.dist(longs[1], lats[1], longs[2], lats[2])*1000)
 }
 
-
-#' direction
+#'@title get_direction
 #' @name get_direction
 #' @description calculate direction using a vector of track geometries and a vector with the number of locations in a track
 #'
@@ -32,8 +35,7 @@ get_direction <- function(trajectory, n){ # NOTE this function is not exported a
   return(bearingRhumb(c(longs[1], lats[1]), c(longs[2], lats[2]))/180*pi)
 }
 
-
-#' airspeed
+#'@title get_airspeed
 #' @name get_airspeed
 #' @description calculate airspeed using u- and v-component, average groundspeed and direction
 #'
@@ -61,8 +63,7 @@ get_airspeed <- function(groundspeed,
   return(airspeed)
 }
 
-
-#' movement
+#' @title movement
 #' @name movement
 #' @description annotate the trajectory with environmental data
 #'
@@ -122,9 +123,9 @@ movement <- function(TRACKS,
   }
 
   # displacement
-  if(length(VAR[grepl('displacement | dot',VAR)]) > 0){
+  if(length(VAR[grepl('displacement|dot',VAR)]) > 0){
   TRACKS[,displacement := mapply(get_displacement, trajectory, n)]
-  print('computed desplacement')
+  print('computed displacement')
   }
 
   # direction
@@ -138,10 +139,13 @@ movement <- function(TRACKS,
   }
 
   # Variables that we do not want to include are removed again
-  exclude <- vars_all[!vars_all %in% VAR]   # see here if not working https://stackoverflow.com/questions/9202413/how-do-you-delete-a-column-by-name-in-data-table
+  exclude <- vars_all[!vars_all %in% VAR] # see here if not working https://stackoverflow.com/questions/9202413/how-do-you-delete-a-column-by-name-in-data-table
+  if(length(exclude) > 0){
   TRACKS[, c(exclude):=NULL]  # remove columns that are used for calculations but should not be in output
   print(paste0('removed columns: ',exclude, collapse=' '))
-
+  } else {
+  print(paste0('removed columns: ',0, collapse=' '))
+  }
   return(TRACKS)
 }
 
