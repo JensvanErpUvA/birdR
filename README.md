@@ -1,6 +1,6 @@
 # birdar
-
-A R package to filter birdradar datasets which have as minimal input a track table with the following columns. Several of these columns might be stored alternatively for different radars and require additional data preparation.
+ 
+A R package to filter birdradar datasets which have as minimal input a track table with the following columns. Several of these columns might be stored alternatively for different radars and require additional data preparation. For more documentation of functions see the [birdar](https://uva_ibed_ame.gitlab.io/robin_radar/birdar/) webpage. 
  
 | column          | description                                                            | 
 |:---------------:|:----------------------------------------------------------------------:|
@@ -63,125 +63,22 @@ remotes::install_git("http://gitlabdeploytoken658893:z661w3sBPtdvSAHxLCLs@gitlab
 
 ### area of inclusion 
 
+see more examples in the 
 ```r
-# inclusion ring
-
-# location as vector
+# without exclusion areas 
 location <- c(4.185345, 52.42783)
-area_of_inclusion <-  roi(location=location,
-                         distance=c(2500,1000),
-                         crs=23095)
-
-# location as geom
-# 4326
-location <- st_sfc(st_point(c(4.185345, 52.42783)),crs=4326)
-area_of_inclusion <-  roi(location=location,
-                         distance=c(2500,1000),
-                         crs=23095)
-# 3035
-location <- st_sfc(st_point(c(3925960, 3273397)),crs=3035)
-area_of_inclusion <-  roi(location=location,
-                         distance=c(2500,1000),
-                         crs=23095)
-## distance
-
-# one distance value: no exclusion of area near radar
-location <- st_sfc(st_point(c(4.185345, 52.42783)),crs=4326)
-area_of_inclusion <-  roi(location=location,
-                         distance=2500,
-                         crs=23095)
-# two distance values: no exclusion of area near radar
-location <- st_sfc(st_point(c(4.185345, 52.42783)),crs=4326)
-area_of_inclusion <-  roi(location=location,
-                         distance=c(2500,1000),
-                         crs=23095)
-
-## exclusion angles
-location <- st_sfc(st_point(c(4.185345, 52.42783)),crs=4326)
-
-# exclusion angles can be a list, vector or matrix
-
-# list
-area_of_inclusion <-  roi(location=location,
-                         distance=c(2500,1000),
-                         crs=23095,
-                         excl_angles=list(c(287,30),c(115,135)))
-
-# vector
 area_of_inclusion <-  roi(location=location,
                          distance=c(2500,1000),
                          crs=23095,
                          excl_angles=c(287,30,115,135))
 
-# matrix
-area_of_inclusion <-  roi(location=location,
-                         distance=c(2500,1000),
-                         crs=23095,
-                         excl_angles=matrix(c(287,30,115,135),nrow=2,ncol=2,byrow=T))
-
-# do not exclude areas near the radar
-area_of_inclusion <-  roi(location=location,
-                         distance=c(2500),
-                         crs=23095,
-                         excl_angles=matrix(c(287,30,115,135),nrow=2,ncol=2,byrow=T))
-
-## exclusion areas
-
-# without buffer points will not be excluded
-location <- st_sfc(st_point(c(4.185345, 52.42783)),crs=4326)
-
+# with exclusion areas 
+location <- c(4.185345, 52.42783)
 area_of_inclusion <-  roi(location=location,
                          distance=c(2500,1000),
                          crs=23095,
                          excl_angles=c(287,30,115,135),
                          excl_geom=turbines)
-
-# buffer outside the function
-polygons <- st_buffer(st_transform(turbines$geometry,23095),100)
-area_of_inclusion <-  roi(location=location,
-                         distance=c(2500,1000),
-                         crs=23095,
-                         excl_angles=c(287,30,115,135),
-                         excl_geom=polygons)
-# buffer within the function
-area_of_inclusion <-  roi(location=location,
-                         distance=c(2500,1000),
-                         crs=23095,
-                         excl_angles=c(287,30,115,135),
-                         excl_geom=turbines,
-                         excl_buffer=100
-)
-
-# vary the buffer distance based on distance from radar
-dist <- st_distance(location,turbines$geometry)
-weight <- as.vector(dist/max(dist) * 100)
-
-area_of_inclusion <-  roi(location=location,
-                         distance=c(2500,1000),
-                         crs=23095,
-                         excl_angles=c(287,30,115,135),
-                         excl_geom=turbines,
-                         excl_buffer=weight
-)
-
-# apply a buffer around multiple locations by using lists
-area_of_inclusion <-  roi(location=location,
-                         distance=2500,
-                         crs=23095,
-                         excl_angles=c(287,30,115,135),
-                         excl_geom=list(turbines,location),
-                         excl_buffer=list(100,1000)
-)
-
-# apply a buffer around multiple locations by using lists and varying buffer weight within a single dataset
-dist <- st_distance(location,turbines$geometry)
-weight <- as.vector(dist/max(dist) * 100)
-area_of_inclusion <-  roi(location=location,
-                         distance=2500,
-                         crs=23095,
-                         excl_angles=c(287,30,115,135),
-                         excl_geom=list(turbines,location),
-                         excl_buffer=list(weight,1000)
 ```
 
 ### movement and weather annotation 
@@ -202,6 +99,25 @@ annotation <- weather(x=annotation,
                       unit="hours")
 # annotate airspeed     
 annotation[,airspeed := mapply(get_airspeed, groundspeed, direction, U10m, V10m)]
+```
+
+
+### data 
+
+Four sample datasets are available within the R-package. 
+
+```r
+# tracks (robin radar database)
+tracks_all 
+
+# wind turbines at sea of NL 
+turbines 
+
+# era5 weather data
+era
+
+# landmask (robin radar database)
+landmask
 ```
 
 ## Description
