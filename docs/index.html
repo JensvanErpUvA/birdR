@@ -74,93 +74,233 @@
 <div class="section level1">
 <div class="page-header"><h1 id="birdar">birdar<a class="anchor" aria-label="anchor" href="#birdar"></a>
 </h1></div>
+<p>A R package to filter birdradar datasets which have as minimal input a track table with the following columns. Several of these columns might be stored alternatively for different radars and require additional data preparation.</p>
+<table class="table">
+<caption>
+<strong>Table:</strong> Columns bird-trajectory table</caption>
+<colgroup>
+<col width="19%">
+<col width="80%">
+</colgroup>
+<thead><tr class="header">
+<th align="center">column</th>
+<th align="center">description</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="center">id</td>
+<td align="center">unique_identifier</td>
+</tr>
+<tr class="even">
+<td align="center">timestamp_start</td>
+<td align="center">UTC timestamp corresponding to the first location of a bird-track</td>
+</tr>
+<tr class="odd">
+<td align="center">timestamp_end</td>
+<td align="center">UTC timestamp corresponding to the last location of a bird-track</td>
+</tr>
+<tr class="even">
+<td align="center">trajectory_time</td>
+<td align="center">offset seconds from timestamp_start for each location in a bird-track</td>
+</tr>
+<tr class="odd">
+<td align="center">trajectory</td>
+<td align="center">linestring geometry corresponding to a bird-track</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level1">
+<h1 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h1>
+<p>There are a few options to install the package some examples below.</p>
 <div class="section level2">
-<h2 id="getting-started">Getting started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
+<h2 id="direct-download">Direct download<a class="anchor" aria-label="anchor" href="#direct-download"></a>
 </h2>
-<p>To make it easy for you to get started with GitLab, here’s a list of recommended next steps.</p>
-<p>Already a pro? Just edit this README.md and make it your own. Want to make it easy? <a href="#editing-this-readme">Use the template at the bottom</a>!</p>
+<p>Download the zip file directly <a href="https://gitlab.com/uva_ibed_ame/swiss_radar/uvaSBRS/-/archive/main/uvaSBRS-main.zip" class="external-link uri">https://gitlab.com/uva_ibed_ame/swiss_radar/uvaSBRS/-/archive/main/uvaSBRS-main.zip</a></p>
+<p>Then use this file to install</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/remotes/man/install_local.html" class="external-link">install_local</a></span><span class="op">(</span><span class="st">'~/Downloads/birdar-main.zip'</span><span class="op">)</span></code></pre></div>
+<p>This can either be done directly, or by starting a new R project from version control.</p>
+<p>Then if R is running the repository/project directory it can be directly installed.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/remotes/man/install_local.html" class="external-link">install_local</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="add-your-files">Add your files<a class="anchor" aria-label="anchor" href="#add-your-files"></a>
+<h2 id="clone-of-repository">Clone of repository<a class="anchor" aria-label="anchor" href="#clone-of-repository"></a>
 </h2>
-<ul>
-<li>
-<input type="checkbox" disabled><a href="https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file" class="external-link">Create</a> or <a href="https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file" class="external-link">upload</a> files</li>
-<li>
-<input type="checkbox" disabled><a href="https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line" class="external-link">Add files using the command line</a> or push an existing Git repository with the following command:</li>
-</ul>
-<pre><code>cd existing_repo
-git remote add origin https://gitlab.com/uva_ibed_ame/robin_radar/birdar.git
-git branch -M main
-git push -uf origin main</code></pre>
+<div class="section level3">
+<h3 id="direct-installation-of-uvasbrs-through-r">Direct installation of uvaSBRS through R<a class="anchor" aria-label="anchor" href="#direct-installation-of-uvasbrs-through-r"></a>
+</h3>
+<div class="section level4">
+<h4 id="1-install-gert-if-not-installed-yet">1. Install gert (if not installed yet)<a class="anchor" aria-label="anchor" href="#1-install-gert-if-not-installed-yet"></a>
+</h4>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">'gert'</span><span class="op">)</span></code></pre></div>
 </div>
-<div class="section level2">
-<h2 id="integrate-with-your-tools">Integrate with your tools<a class="anchor" aria-label="anchor" href="#integrate-with-your-tools"></a>
-</h2>
-<ul>
-<li>
-<input type="checkbox" disabled><a href="https://gitlab.com/uva_ibed_ame/robin_radar/birdar/-/settings/integrations" class="external-link">Set up project integrations</a>
-</li>
-</ul>
+<div class="section level4">
+<h4 id="2-install-uvasbrs">2. Install uvaSBRS<a class="anchor" aria-label="anchor" href="#2-install-uvasbrs"></a>
+</h4>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://docs.ropensci.org/gert/" class="external-link">gert</a></span><span class="op">)</span>
+<span class="fu">gert</span><span class="fu">::</span><span class="fu"><a href="https://docs.ropensci.org/gert/reference/git_fetch.html" class="external-link">git_clone</a></span><span class="op">(</span><span class="st">'http://gitlabdeploytoken658893:z661w3sBPtdvSAHxLCLs@gitlab.com/uva_ibed_ame/robin_radar/birdar'</span>, path <span class="op">=</span> <span class="va">d</span><span class="op">&lt;-</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span><span class="st">"birdar_"</span><span class="op">)</span><span class="op">)</span>
+<span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/devtools/man/remote-reexports.html" class="external-link">install_local</a></span><span class="op">(</span><span class="va">d</span>, force<span class="op">=</span><span class="cn">T</span><span class="op">)</span></code></pre></div>
 </div>
-<div class="section level2">
-<h2 id="collaborate-with-your-team">Collaborate with your team<a class="anchor" aria-label="anchor" href="#collaborate-with-your-team"></a>
-</h2>
-<ul>
-<li>
-<input type="checkbox" disabled><a href="https://docs.gitlab.com/ee/user/project/members/" class="external-link">Invite team members and collaborators</a>
-</li>
-<li>
-<input type="checkbox" disabled><a href="https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html" class="external-link">Create a new merge request</a>
-</li>
-<li>
-<input type="checkbox" disabled><a href="https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically" class="external-link">Automatically close issues from merge requests</a>
-</li>
-<li>
-<input type="checkbox" disabled><a href="https://docs.gitlab.com/ee/user/project/merge_requests/approvals/" class="external-link">Enable merge request approvals</a>
-</li>
-<li>
-<input type="checkbox" disabled><a href="https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html" class="external-link">Automatically merge when pipeline succeeds</a>
-</li>
-</ul>
 </div>
-<div class="section level2">
-<h2 id="test-and-deploy">Test and Deploy<a class="anchor" aria-label="anchor" href="#test-and-deploy"></a>
-</h2>
-<p>Use the built-in continuous integration in GitLab.</p>
-<ul>
-<li>
-<input type="checkbox" disabled><a href="https://docs.gitlab.com/ee/ci/quick_start/index.html" class="external-link">Get started with GitLab CI/CD</a>
-</li>
-<li>
-<input type="checkbox" disabled><a href="https://docs.gitlab.com/ee/user/application_security/sast/" class="external-link">Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)</a>
-</li>
-<li>
-<input type="checkbox" disabled><a href="https://docs.gitlab.com/ee/topics/autodevops/requirements.html" class="external-link">Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy</a>
-</li>
-<li>
-<input type="checkbox" disabled><a href="https://docs.gitlab.com/ee/user/clusters/agent/" class="external-link">Use pull-based deployments for improved Kubernetes management</a>
-</li>
-<li>
-<input type="checkbox" disabled><a href="https://docs.gitlab.com/ee/ci/environments/protected_environments.html" class="external-link">Set up protected environments</a>
-</li>
-</ul>
-<hr>
+<div class="section level3">
+<h3 id="using-remotes">Using <code>remotes</code>
+<a class="anchor" aria-label="anchor" href="#using-remotes"></a>
+</h3>
+<p>Once a new version of the remotes package is released (&gt;2.4.1) the following command should work (also see this <a href="https://github.com/r-lib/remotes/issues/670" class="external-link">issue</a>):</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/remotes/man/install_git.html" class="external-link">install_git</a></span><span class="op">(</span><span class="st">"http://gitlabdeploytoken658893:z661w3sBPtdvSAHxLCLs@gitlab.com/uva_ibed_ame/robin_radar/birdar.git"</span>, force<span class="op">=</span><span class="cn">T</span>, git <span class="op">=</span> <span class="st">'external'</span><span class="op">)</span></code></pre></div>
+</div>
 </div>
 </div>
 <div class="section level1">
-<h1 id="editing-this-readme">Editing this README<a class="anchor" aria-label="anchor" href="#editing-this-readme"></a>
+<h1 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
 </h1>
-<p>When you’re ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to <a href="https://www.makeareadme.com/" class="external-link">makeareadme.com</a> for this template.</p>
-<div class="section level2">
-<h2 id="suggestions-for-a-good-readme">Suggestions for a good README<a class="anchor" aria-label="anchor" href="#suggestions-for-a-good-readme"></a>
-</h2>
-<p>Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.</p>
+<div class="section level3">
+<h3 id="area-of-inclusion">area of inclusion<a class="anchor" aria-label="anchor" href="#area-of-inclusion"></a>
+</h3>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="co"># inclusion ring</span></span>
+<span id="cb6-2"><a href="#cb6-2"></a></span>
+<span id="cb6-3"><a href="#cb6-3"></a><span class="co"># location as vector</span></span>
+<span id="cb6-4"><a href="#cb6-4"></a>location &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="fl">4.185345</span>, <span class="fl">52.42783</span>)</span>
+<span id="cb6-5"><a href="#cb6-5"></a>area_of_inclusion &lt;-<span class="st">  </span><span class="kw">roi</span>(<span class="dt">location=</span>location,</span>
+<span id="cb6-6"><a href="#cb6-6"></a>                         <span class="dt">distance=</span><span class="kw">c</span>(<span class="dv">2500</span>,<span class="dv">1000</span>),</span>
+<span id="cb6-7"><a href="#cb6-7"></a>                         <span class="dt">crs=</span><span class="dv">23095</span>)</span>
+<span id="cb6-8"><a href="#cb6-8"></a></span>
+<span id="cb6-9"><a href="#cb6-9"></a><span class="co"># location as geom</span></span>
+<span id="cb6-10"><a href="#cb6-10"></a><span class="co"># 4326</span></span>
+<span id="cb6-11"><a href="#cb6-11"></a>location &lt;-<span class="st"> </span><span class="kw">st_sfc</span>(<span class="kw">st_point</span>(<span class="kw">c</span>(<span class="fl">4.185345</span>, <span class="fl">52.42783</span>)),<span class="dt">crs=</span><span class="dv">4326</span>)</span>
+<span id="cb6-12"><a href="#cb6-12"></a>area_of_inclusion &lt;-<span class="st">  </span><span class="kw">roi</span>(<span class="dt">location=</span>location,</span>
+<span id="cb6-13"><a href="#cb6-13"></a>                         <span class="dt">distance=</span><span class="kw">c</span>(<span class="dv">2500</span>,<span class="dv">1000</span>),</span>
+<span id="cb6-14"><a href="#cb6-14"></a>                         <span class="dt">crs=</span><span class="dv">23095</span>)</span>
+<span id="cb6-15"><a href="#cb6-15"></a><span class="co"># 3035</span></span>
+<span id="cb6-16"><a href="#cb6-16"></a>location &lt;-<span class="st"> </span><span class="kw">st_sfc</span>(<span class="kw">st_point</span>(<span class="kw">c</span>(<span class="dv">3925960</span>, <span class="dv">3273397</span>)),<span class="dt">crs=</span><span class="dv">3035</span>)</span>
+<span id="cb6-17"><a href="#cb6-17"></a>area_of_inclusion &lt;-<span class="st">  </span><span class="kw">roi</span>(<span class="dt">location=</span>location,</span>
+<span id="cb6-18"><a href="#cb6-18"></a>                         <span class="dt">distance=</span><span class="kw">c</span>(<span class="dv">2500</span>,<span class="dv">1000</span>),</span>
+<span id="cb6-19"><a href="#cb6-19"></a>                         <span class="dt">crs=</span><span class="dv">23095</span>)</span>
+<span id="cb6-20"><a href="#cb6-20"></a><span class="co">## distance</span></span>
+<span id="cb6-21"><a href="#cb6-21"></a></span>
+<span id="cb6-22"><a href="#cb6-22"></a><span class="co"># one distance value: no exclusion of area near radar</span></span>
+<span id="cb6-23"><a href="#cb6-23"></a>location &lt;-<span class="st"> </span><span class="kw">st_sfc</span>(<span class="kw">st_point</span>(<span class="kw">c</span>(<span class="fl">4.185345</span>, <span class="fl">52.42783</span>)),<span class="dt">crs=</span><span class="dv">4326</span>)</span>
+<span id="cb6-24"><a href="#cb6-24"></a>area_of_inclusion &lt;-<span class="st">  </span><span class="kw">roi</span>(<span class="dt">location=</span>location,</span>
+<span id="cb6-25"><a href="#cb6-25"></a>                         <span class="dt">distance=</span><span class="dv">2500</span>,</span>
+<span id="cb6-26"><a href="#cb6-26"></a>                         <span class="dt">crs=</span><span class="dv">23095</span>)</span>
+<span id="cb6-27"><a href="#cb6-27"></a><span class="co"># two distance values: no exclusion of area near radar</span></span>
+<span id="cb6-28"><a href="#cb6-28"></a>location &lt;-<span class="st"> </span><span class="kw">st_sfc</span>(<span class="kw">st_point</span>(<span class="kw">c</span>(<span class="fl">4.185345</span>, <span class="fl">52.42783</span>)),<span class="dt">crs=</span><span class="dv">4326</span>)</span>
+<span id="cb6-29"><a href="#cb6-29"></a>area_of_inclusion &lt;-<span class="st">  </span><span class="kw">roi</span>(<span class="dt">location=</span>location,</span>
+<span id="cb6-30"><a href="#cb6-30"></a>                         <span class="dt">distance=</span><span class="kw">c</span>(<span class="dv">2500</span>,<span class="dv">1000</span>),</span>
+<span id="cb6-31"><a href="#cb6-31"></a>                         <span class="dt">crs=</span><span class="dv">23095</span>)</span>
+<span id="cb6-32"><a href="#cb6-32"></a></span>
+<span id="cb6-33"><a href="#cb6-33"></a><span class="co">## exclusion angles</span></span>
+<span id="cb6-34"><a href="#cb6-34"></a>location &lt;-<span class="st"> </span><span class="kw">st_sfc</span>(<span class="kw">st_point</span>(<span class="kw">c</span>(<span class="fl">4.185345</span>, <span class="fl">52.42783</span>)),<span class="dt">crs=</span><span class="dv">4326</span>)</span>
+<span id="cb6-35"><a href="#cb6-35"></a></span>
+<span id="cb6-36"><a href="#cb6-36"></a><span class="co"># exclusion angles can be a list, vector or matrix</span></span>
+<span id="cb6-37"><a href="#cb6-37"></a></span>
+<span id="cb6-38"><a href="#cb6-38"></a><span class="co"># list</span></span>
+<span id="cb6-39"><a href="#cb6-39"></a>area_of_inclusion &lt;-<span class="st">  </span><span class="kw">roi</span>(<span class="dt">location=</span>location,</span>
+<span id="cb6-40"><a href="#cb6-40"></a>                         <span class="dt">distance=</span><span class="kw">c</span>(<span class="dv">2500</span>,<span class="dv">1000</span>),</span>
+<span id="cb6-41"><a href="#cb6-41"></a>                         <span class="dt">crs=</span><span class="dv">23095</span>,</span>
+<span id="cb6-42"><a href="#cb6-42"></a>                         <span class="dt">excl_angles=</span><span class="kw">list</span>(<span class="kw">c</span>(<span class="dv">287</span>,<span class="dv">30</span>),<span class="kw">c</span>(<span class="dv">115</span>,<span class="dv">135</span>)))</span>
+<span id="cb6-43"><a href="#cb6-43"></a></span>
+<span id="cb6-44"><a href="#cb6-44"></a><span class="co"># vector</span></span>
+<span id="cb6-45"><a href="#cb6-45"></a>area_of_inclusion &lt;-<span class="st">  </span><span class="kw">roi</span>(<span class="dt">location=</span>location,</span>
+<span id="cb6-46"><a href="#cb6-46"></a>                         <span class="dt">distance=</span><span class="kw">c</span>(<span class="dv">2500</span>,<span class="dv">1000</span>),</span>
+<span id="cb6-47"><a href="#cb6-47"></a>                         <span class="dt">crs=</span><span class="dv">23095</span>,</span>
+<span id="cb6-48"><a href="#cb6-48"></a>                         <span class="dt">excl_angles=</span><span class="kw">c</span>(<span class="dv">287</span>,<span class="dv">30</span>,<span class="dv">115</span>,<span class="dv">135</span>))</span>
+<span id="cb6-49"><a href="#cb6-49"></a></span>
+<span id="cb6-50"><a href="#cb6-50"></a><span class="co"># matrix</span></span>
+<span id="cb6-51"><a href="#cb6-51"></a>area_of_inclusion &lt;-<span class="st">  </span><span class="kw">roi</span>(<span class="dt">location=</span>location,</span>
+<span id="cb6-52"><a href="#cb6-52"></a>                         <span class="dt">distance=</span><span class="kw">c</span>(<span class="dv">2500</span>,<span class="dv">1000</span>),</span>
+<span id="cb6-53"><a href="#cb6-53"></a>                         <span class="dt">crs=</span><span class="dv">23095</span>,</span>
+<span id="cb6-54"><a href="#cb6-54"></a>                         <span class="dt">excl_angles=</span><span class="kw">matrix</span>(<span class="kw">c</span>(<span class="dv">287</span>,<span class="dv">30</span>,<span class="dv">115</span>,<span class="dv">135</span>),<span class="dt">nrow=</span><span class="dv">2</span>,<span class="dt">ncol=</span><span class="dv">2</span>,<span class="dt">byrow=</span>T))</span>
+<span id="cb6-55"><a href="#cb6-55"></a></span>
+<span id="cb6-56"><a href="#cb6-56"></a><span class="co"># do not exclude areas near the radar</span></span>
+<span id="cb6-57"><a href="#cb6-57"></a>area_of_inclusion &lt;-<span class="st">  </span><span class="kw">roi</span>(<span class="dt">location=</span>location,</span>
+<span id="cb6-58"><a href="#cb6-58"></a>                         <span class="dt">distance=</span><span class="kw">c</span>(<span class="dv">2500</span>),</span>
+<span id="cb6-59"><a href="#cb6-59"></a>                         <span class="dt">crs=</span><span class="dv">23095</span>,</span>
+<span id="cb6-60"><a href="#cb6-60"></a>                         <span class="dt">excl_angles=</span><span class="kw">matrix</span>(<span class="kw">c</span>(<span class="dv">287</span>,<span class="dv">30</span>,<span class="dv">115</span>,<span class="dv">135</span>),<span class="dt">nrow=</span><span class="dv">2</span>,<span class="dt">ncol=</span><span class="dv">2</span>,<span class="dt">byrow=</span>T))</span>
+<span id="cb6-61"><a href="#cb6-61"></a></span>
+<span id="cb6-62"><a href="#cb6-62"></a><span class="co">## exclusion areas</span></span>
+<span id="cb6-63"><a href="#cb6-63"></a></span>
+<span id="cb6-64"><a href="#cb6-64"></a><span class="co"># without buffer points will not be excluded</span></span>
+<span id="cb6-65"><a href="#cb6-65"></a>location &lt;-<span class="st"> </span><span class="kw">st_sfc</span>(<span class="kw">st_point</span>(<span class="kw">c</span>(<span class="fl">4.185345</span>, <span class="fl">52.42783</span>)),<span class="dt">crs=</span><span class="dv">4326</span>)</span>
+<span id="cb6-66"><a href="#cb6-66"></a></span>
+<span id="cb6-67"><a href="#cb6-67"></a>area_of_inclusion &lt;-<span class="st">  </span><span class="kw">roi</span>(<span class="dt">location=</span>location,</span>
+<span id="cb6-68"><a href="#cb6-68"></a>                         <span class="dt">distance=</span><span class="kw">c</span>(<span class="dv">2500</span>,<span class="dv">1000</span>),</span>
+<span id="cb6-69"><a href="#cb6-69"></a>                         <span class="dt">crs=</span><span class="dv">23095</span>,</span>
+<span id="cb6-70"><a href="#cb6-70"></a>                         <span class="dt">excl_angles=</span><span class="kw">c</span>(<span class="dv">287</span>,<span class="dv">30</span>,<span class="dv">115</span>,<span class="dv">135</span>),</span>
+<span id="cb6-71"><a href="#cb6-71"></a>                         <span class="dt">excl_geom=</span>turbines)</span>
+<span id="cb6-72"><a href="#cb6-72"></a></span>
+<span id="cb6-73"><a href="#cb6-73"></a><span class="co"># buffer outside the function</span></span>
+<span id="cb6-74"><a href="#cb6-74"></a>polygons &lt;-<span class="st"> </span><span class="kw">st_buffer</span>(<span class="kw">st_transform</span>(turbines<span class="op">$</span>geometry,<span class="dv">23095</span>),<span class="dv">100</span>)</span>
+<span id="cb6-75"><a href="#cb6-75"></a>area_of_inclusion &lt;-<span class="st">  </span><span class="kw">roi</span>(<span class="dt">location=</span>location,</span>
+<span id="cb6-76"><a href="#cb6-76"></a>                         <span class="dt">distance=</span><span class="kw">c</span>(<span class="dv">2500</span>,<span class="dv">1000</span>),</span>
+<span id="cb6-77"><a href="#cb6-77"></a>                         <span class="dt">crs=</span><span class="dv">23095</span>,</span>
+<span id="cb6-78"><a href="#cb6-78"></a>                         <span class="dt">excl_angles=</span><span class="kw">c</span>(<span class="dv">287</span>,<span class="dv">30</span>,<span class="dv">115</span>,<span class="dv">135</span>),</span>
+<span id="cb6-79"><a href="#cb6-79"></a>                         <span class="dt">excl_geom=</span>polygons)</span>
+<span id="cb6-80"><a href="#cb6-80"></a><span class="co"># buffer within the function</span></span>
+<span id="cb6-81"><a href="#cb6-81"></a>area_of_inclusion &lt;-<span class="st">  </span><span class="kw">roi</span>(<span class="dt">location=</span>location,</span>
+<span id="cb6-82"><a href="#cb6-82"></a>                         <span class="dt">distance=</span><span class="kw">c</span>(<span class="dv">2500</span>,<span class="dv">1000</span>),</span>
+<span id="cb6-83"><a href="#cb6-83"></a>                         <span class="dt">crs=</span><span class="dv">23095</span>,</span>
+<span id="cb6-84"><a href="#cb6-84"></a>                         <span class="dt">excl_angles=</span><span class="kw">c</span>(<span class="dv">287</span>,<span class="dv">30</span>,<span class="dv">115</span>,<span class="dv">135</span>),</span>
+<span id="cb6-85"><a href="#cb6-85"></a>                         <span class="dt">excl_geom=</span>turbines,</span>
+<span id="cb6-86"><a href="#cb6-86"></a>                         <span class="dt">excl_buffer=</span><span class="dv">100</span></span>
+<span id="cb6-87"><a href="#cb6-87"></a>)</span>
+<span id="cb6-88"><a href="#cb6-88"></a></span>
+<span id="cb6-89"><a href="#cb6-89"></a><span class="co"># vary the buffer distance based on distance from radar</span></span>
+<span id="cb6-90"><a href="#cb6-90"></a>dist &lt;-<span class="st"> </span><span class="kw">st_distance</span>(location,turbines<span class="op">$</span>geometry)</span>
+<span id="cb6-91"><a href="#cb6-91"></a>weight &lt;-<span class="st"> </span><span class="kw">as.vector</span>(dist<span class="op">/</span><span class="kw">max</span>(dist) <span class="op">*</span><span class="st"> </span><span class="dv">100</span>)</span>
+<span id="cb6-92"><a href="#cb6-92"></a></span>
+<span id="cb6-93"><a href="#cb6-93"></a>area_of_inclusion &lt;-<span class="st">  </span><span class="kw">roi</span>(<span class="dt">location=</span>location,</span>
+<span id="cb6-94"><a href="#cb6-94"></a>                         <span class="dt">distance=</span><span class="kw">c</span>(<span class="dv">2500</span>,<span class="dv">1000</span>),</span>
+<span id="cb6-95"><a href="#cb6-95"></a>                         <span class="dt">crs=</span><span class="dv">23095</span>,</span>
+<span id="cb6-96"><a href="#cb6-96"></a>                         <span class="dt">excl_angles=</span><span class="kw">c</span>(<span class="dv">287</span>,<span class="dv">30</span>,<span class="dv">115</span>,<span class="dv">135</span>),</span>
+<span id="cb6-97"><a href="#cb6-97"></a>                         <span class="dt">excl_geom=</span>turbines,</span>
+<span id="cb6-98"><a href="#cb6-98"></a>                         <span class="dt">excl_buffer=</span>weight</span>
+<span id="cb6-99"><a href="#cb6-99"></a>)</span>
+<span id="cb6-100"><a href="#cb6-100"></a></span>
+<span id="cb6-101"><a href="#cb6-101"></a><span class="co"># apply a buffer around multiple locations by using lists</span></span>
+<span id="cb6-102"><a href="#cb6-102"></a>area_of_inclusion &lt;-<span class="st">  </span><span class="kw">roi</span>(<span class="dt">location=</span>location,</span>
+<span id="cb6-103"><a href="#cb6-103"></a>                         <span class="dt">distance=</span><span class="dv">2500</span>,</span>
+<span id="cb6-104"><a href="#cb6-104"></a>                         <span class="dt">crs=</span><span class="dv">23095</span>,</span>
+<span id="cb6-105"><a href="#cb6-105"></a>                         <span class="dt">excl_angles=</span><span class="kw">c</span>(<span class="dv">287</span>,<span class="dv">30</span>,<span class="dv">115</span>,<span class="dv">135</span>),</span>
+<span id="cb6-106"><a href="#cb6-106"></a>                         <span class="dt">excl_geom=</span><span class="kw">list</span>(turbines,location),</span>
+<span id="cb6-107"><a href="#cb6-107"></a>                         <span class="dt">excl_buffer=</span><span class="kw">list</span>(<span class="dv">100</span>,<span class="dv">1000</span>)</span>
+<span id="cb6-108"><a href="#cb6-108"></a>)</span>
+<span id="cb6-109"><a href="#cb6-109"></a></span>
+<span id="cb6-110"><a href="#cb6-110"></a><span class="co"># apply a buffer around multiple locations by using lists and varying buffer weight within a single dataset</span></span>
+<span id="cb6-111"><a href="#cb6-111"></a>dist &lt;-<span class="st"> </span><span class="kw">st_distance</span>(location,turbines<span class="op">$</span>geometry)</span>
+<span id="cb6-112"><a href="#cb6-112"></a>weight &lt;-<span class="st"> </span><span class="kw">as.vector</span>(dist<span class="op">/</span><span class="kw">max</span>(dist) <span class="op">*</span><span class="st"> </span><span class="dv">100</span>)</span>
+<span id="cb6-113"><a href="#cb6-113"></a>area_of_inclusion &lt;-<span class="st">  </span><span class="kw">roi</span>(<span class="dt">location=</span>location,</span>
+<span id="cb6-114"><a href="#cb6-114"></a>                         <span class="dt">distance=</span><span class="dv">2500</span>,</span>
+<span id="cb6-115"><a href="#cb6-115"></a>                         <span class="dt">crs=</span><span class="dv">23095</span>,</span>
+<span id="cb6-116"><a href="#cb6-116"></a>                         <span class="dt">excl_angles=</span><span class="kw">c</span>(<span class="dv">287</span>,<span class="dv">30</span>,<span class="dv">115</span>,<span class="dv">135</span>),</span>
+<span id="cb6-117"><a href="#cb6-117"></a>                         <span class="dt">excl_geom=</span><span class="kw">list</span>(turbines,location),</span>
+<span id="cb6-118"><a href="#cb6-118"></a>                         <span class="dt">excl_buffer=</span><span class="kw">list</span>(weight,<span class="dv">1000</span>)</span></code></pre></div>
 </div>
-<div class="section level2">
-<h2 id="name">Name<a class="anchor" aria-label="anchor" href="#name"></a>
-</h2>
-<p>Choose a self-explaining name for your project.</p>
+<div class="section level3">
+<h3 id="movement-and-weather-annotation">movement and weather annotation<a class="anchor" aria-label="anchor" href="#movement-and-weather-annotation"></a>
+</h3>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># sample </span>
+<span class="va">sample</span> <span class="op">&lt;-</span> <span class="va">tracks_all</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">tracks_all</span><span class="op">)</span>,<span class="fl">1000</span><span class="op">)</span>,<span class="op">]</span>
+
+<span class="co"># annotate movement metrics</span>
+<span class="va">annotation</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/movement.html">movement</a></span><span class="op">(</span>TRACKS<span class="op">=</span><span class="va">sample</span>,
+                       VAR<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'n'</span>,<span class="st">'duration'</span>, <span class="st">'length'</span>, <span class="st">'groundspeed'</span>, <span class="st">'displacement'</span>, <span class="st">'direction'</span>,<span class="st">'dot'</span><span class="op">)</span>, 
+                       crs<span class="op">=</span><span class="fl">23095</span><span class="op">)</span>
+
+<span class="co"># annotate weather </span>
+<span class="va">annotation</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/annotation.html">weather</a></span><span class="op">(</span>x<span class="op">=</span><span class="va">annotation</span>,
+                      era5<span class="op">=</span><span class="va">era</span>,
+                      var<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"U10m"</span>,<span class="st">"V10m"</span><span class="op">)</span>,
+                      unit<span class="op">=</span><span class="st">"hours"</span><span class="op">)</span>
+<span class="co"># annotate airspeed     </span>
+<span class="va">annotation</span><span class="op">[</span>,<span class="va">airspeed</span> <span class="op">:=</span> <span class="fu"><a href="https://rdrr.io/r/base/mapply.html" class="external-link">mapply</a></span><span class="op">(</span><span class="va">get_airspeed</span>, <span class="va">groundspeed</span>, <span class="va">direction</span>, <span class="va">U10m</span>, <span class="va">V10m</span><span class="op">)</span><span class="op">]</span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="description">Description<a class="anchor" aria-label="anchor" href="#description"></a>
@@ -178,12 +318,12 @@ git push -uf origin main</code></pre>
 <p>Depending on what you are making, it can be a good idea to include screenshots or even a video (you’ll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.</p>
 </div>
 <div class="section level2">
-<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+<h2 id="installation-1">Installation<a class="anchor" aria-label="anchor" href="#installation-1"></a>
 </h2>
 <p>Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.</p>
 </div>
 <div class="section level2">
-<h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
+<h2 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a>
 </h2>
 <p>Use examples liberally, and show the expected output if you can. It’s helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.</p>
 </div>

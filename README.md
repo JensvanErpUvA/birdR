@@ -1,58 +1,208 @@
 # birdar
 
+A R package to filter birdradar datasets which have as minimal input a track table with the following columns. Several of these columns might be stored alternatively for different radars and require additional data preparation.
+ 
+| column          | description                                                            | 
+|:---------------:|:----------------------------------------------------------------------:|
+| id              | unique_identifier                                                      |               
+| timestamp_start | UTC timestamp corresponding to the first location of a bird-track      | 
+| timestamp_end   | UTC timestamp corresponding to the last location of a bird-track       | 
+| trajectory_time | offset seconds from timestamp_start for each location in a bird-track  | 
+| trajectory      | linestring geometry corresponding to a bird-track                      | 
+: **Table:** Columns bird-trajectory table 
 
 
-## Getting started
+# Installation
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+There are a few options to install the package some examples below.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## Direct download
 
-## Add your files
+Download the zip file directly https://gitlab.com/uva_ibed_ame/swiss_radar/uvaSBRS/-/archive/main/uvaSBRS-main.zip
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+Then use this file to install
 
+```R
+remotes::install_local('~/Downloads/birdar-main.zip')
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/uva_ibed_ame/robin_radar/birdar.git
-git branch -M main
-git push -uf origin main
+
+This can either be done directly, or by starting a new R project from version control.
+
+Then if R is running the repository/project directory it can be directly installed.
+
+```R
+remotes::install_local()
 ```
 
-## Integrate with your tools
+## Clone of repository
 
-- [ ] [Set up project integrations](https://gitlab.com/uva_ibed_ame/robin_radar/birdar/-/settings/integrations)
+### Direct installation of uvaSBRS through R
 
-## Collaborate with your team
+#### 1. Install gert (if not installed yet)
+```R
+install.packages('gert')
+```
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+#### 2. Install uvaSBRS
+```R
+library(gert)
+gert::git_clone('http://gitlabdeploytoken658893:z661w3sBPtdvSAHxLCLs@gitlab.com/uva_ibed_ame/robin_radar/birdar', path = d<-tempfile("birdar_"))
+devtools::install_local(d, force=T)
+```
 
-## Test and Deploy
+### Using `remotes`
 
-Use the built-in continuous integration in GitLab.
+Once a new version of the remotes package is released (>2.4.1) the following command should work (also see this [issue](https://github.com/r-lib/remotes/issues/670)):
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
 
-***
+```r
+remotes::install_git("http://gitlabdeploytoken658893:z661w3sBPtdvSAHxLCLs@gitlab.com/uva_ibed_ame/robin_radar/birdar.git", force=T, git = 'external')
+```
 
-# Editing this README
+# Usage 
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+### area of inclusion 
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+```r
+# inclusion ring
 
-## Name
-Choose a self-explaining name for your project.
+# location as vector
+location <- c(4.185345, 52.42783)
+area_of_inclusion <-  roi(location=location,
+                         distance=c(2500,1000),
+                         crs=23095)
+
+# location as geom
+# 4326
+location <- st_sfc(st_point(c(4.185345, 52.42783)),crs=4326)
+area_of_inclusion <-  roi(location=location,
+                         distance=c(2500,1000),
+                         crs=23095)
+# 3035
+location <- st_sfc(st_point(c(3925960, 3273397)),crs=3035)
+area_of_inclusion <-  roi(location=location,
+                         distance=c(2500,1000),
+                         crs=23095)
+## distance
+
+# one distance value: no exclusion of area near radar
+location <- st_sfc(st_point(c(4.185345, 52.42783)),crs=4326)
+area_of_inclusion <-  roi(location=location,
+                         distance=2500,
+                         crs=23095)
+# two distance values: no exclusion of area near radar
+location <- st_sfc(st_point(c(4.185345, 52.42783)),crs=4326)
+area_of_inclusion <-  roi(location=location,
+                         distance=c(2500,1000),
+                         crs=23095)
+
+## exclusion angles
+location <- st_sfc(st_point(c(4.185345, 52.42783)),crs=4326)
+
+# exclusion angles can be a list, vector or matrix
+
+# list
+area_of_inclusion <-  roi(location=location,
+                         distance=c(2500,1000),
+                         crs=23095,
+                         excl_angles=list(c(287,30),c(115,135)))
+
+# vector
+area_of_inclusion <-  roi(location=location,
+                         distance=c(2500,1000),
+                         crs=23095,
+                         excl_angles=c(287,30,115,135))
+
+# matrix
+area_of_inclusion <-  roi(location=location,
+                         distance=c(2500,1000),
+                         crs=23095,
+                         excl_angles=matrix(c(287,30,115,135),nrow=2,ncol=2,byrow=T))
+
+# do not exclude areas near the radar
+area_of_inclusion <-  roi(location=location,
+                         distance=c(2500),
+                         crs=23095,
+                         excl_angles=matrix(c(287,30,115,135),nrow=2,ncol=2,byrow=T))
+
+## exclusion areas
+
+# without buffer points will not be excluded
+location <- st_sfc(st_point(c(4.185345, 52.42783)),crs=4326)
+
+area_of_inclusion <-  roi(location=location,
+                         distance=c(2500,1000),
+                         crs=23095,
+                         excl_angles=c(287,30,115,135),
+                         excl_geom=turbines)
+
+# buffer outside the function
+polygons <- st_buffer(st_transform(turbines$geometry,23095),100)
+area_of_inclusion <-  roi(location=location,
+                         distance=c(2500,1000),
+                         crs=23095,
+                         excl_angles=c(287,30,115,135),
+                         excl_geom=polygons)
+# buffer within the function
+area_of_inclusion <-  roi(location=location,
+                         distance=c(2500,1000),
+                         crs=23095,
+                         excl_angles=c(287,30,115,135),
+                         excl_geom=turbines,
+                         excl_buffer=100
+)
+
+# vary the buffer distance based on distance from radar
+dist <- st_distance(location,turbines$geometry)
+weight <- as.vector(dist/max(dist) * 100)
+
+area_of_inclusion <-  roi(location=location,
+                         distance=c(2500,1000),
+                         crs=23095,
+                         excl_angles=c(287,30,115,135),
+                         excl_geom=turbines,
+                         excl_buffer=weight
+)
+
+# apply a buffer around multiple locations by using lists
+area_of_inclusion <-  roi(location=location,
+                         distance=2500,
+                         crs=23095,
+                         excl_angles=c(287,30,115,135),
+                         excl_geom=list(turbines,location),
+                         excl_buffer=list(100,1000)
+)
+
+# apply a buffer around multiple locations by using lists and varying buffer weight within a single dataset
+dist <- st_distance(location,turbines$geometry)
+weight <- as.vector(dist/max(dist) * 100)
+area_of_inclusion <-  roi(location=location,
+                         distance=2500,
+                         crs=23095,
+                         excl_angles=c(287,30,115,135),
+                         excl_geom=list(turbines,location),
+                         excl_buffer=list(weight,1000)
+```
+
+### movement and weather annotation 
+
+```r
+# sample 
+sample <- tracks_all[sample(1:nrow(tracks_all),1000),]
+
+# annotate movement metrics
+annotation <- movement(TRACKS=sample,
+                       VAR=c('n','duration', 'length', 'groundspeed', 'displacement', 'direction','dot'), 
+                       crs=23095)
+
+# annotate weather 
+annotation <- weather(x=annotation,
+                      era5=era,
+                      var=c("U10m","V10m"),
+                      unit="hours")
+# annotate airspeed     
+annotation[,airspeed := mapply(get_airspeed, groundspeed, direction, U10m, V10m)]
+```
 
 ## Description
 Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
