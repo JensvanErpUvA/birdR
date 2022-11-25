@@ -63,7 +63,7 @@ remotes::install_git("http://gitlabdeploytoken658893:z661w3sBPtdvSAHxLCLs@gitlab
 
 ### area of inclusion 
 
-see more examples in the 
+see more examples in the manual.
 ```r
 # without exclusion areas 
 location <- c(4.185345, 52.42783)
@@ -97,6 +97,7 @@ annotation <- weather(x=annotation,
                       era5=era,
                       var=c("U10m","V10m"),
                       unit="hours")
+                      
 # annotate airspeed     
 annotation[,airspeed := mapply(get_airspeed, groundspeed, direction, U10m, V10m)]
 ```
