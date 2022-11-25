@@ -3,19 +3,19 @@ files <- list.files('/Users/jedgroev/surfdrive/Shared/Methodology Paper data',fu
 files <- files[!grepl('.Rmd',files)]
 
 # NOTE THAT LARGE DATASETS CANNOT BE SUBMITTED TO CRAN
-# shps
-turbines <- sf::st_read(files[grepl('.shp',files)])
+#### 1. shps ####
+turbines <- as.data.table(sf::st_read(files[grepl('.shp',files)]))
 usethis::use_data(turbines, overwrite = TRUE)
 
-# era5
+#### 2. era5 ####
 era <- fread(files[grepl('ERA5',files)])
 usethis::use_data(era, overwrite = TRUE)
 
-# tracks
+#### 3. tracks ####
 tracks_all <- fread(files[grepl('bird-tracks_bare_w1',files)][1])
 usethis::use_data(tracks_all, overwrite = TRUE)
 
-# mask
+#### 4. mask ####
 landmask <- fread(files[grepl('landmask',files)])
 usethis::use_data(landmask, overwrite = TRUE)
 
