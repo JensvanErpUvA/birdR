@@ -1,0 +1,9 @@
+destination: public
+url: https://uva_ibed_ame.gitlab.io/robin_radar/birdar/
+development:
+  mode: auto
+
+navbar:
+  right:
+    - icon: fa-gitlab
+      href: https://gitlab.com/uva_ibed_ame/robin_radar/birdar
