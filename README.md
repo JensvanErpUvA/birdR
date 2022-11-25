@@ -18,7 +18,7 @@ There are a few options to install the package some examples below.
 
 ## Direct download
 
-Download the zip file directly https://gitlab.com/uva_ibed_ame/swiss_radar/uvaSBRS/-/archive/main/uvaSBRS-main.zip
+Download the zip file directly https://gitlab.com/uva_ibed_ame/robin_radar/birdar/-/archive/main/birdar-main.zip
 
 Then use this file to install
 
