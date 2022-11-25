@@ -111,6 +111,7 @@ Should be user defined as this is highly specific to the user input and requirem
 ```{r data_loading_and_preprocessing}
 ## Load in tracking data
 tracks_all <- fread(file=radar_filename)
+load('../data/tracks_all.rda')
 
 ## Data contains two timestamps: the start and end of each track
 ## Convert timestamps (characters) into POSIXct objects, with timezone = UTC
@@ -125,11 +126,13 @@ tracks_all <- as.data.table(tracks_all)
 
 ## Location specific: load in turbines
 ## Load in turbines
-all_turbs <- as.data.table(st_read(turbine_filename))
+#all_turbs <- as.data.table(st_read(turbine_filename))
+load('../data/turbines.rda')
+all_turbs <- as.data.table(turbines)
 ## Our file contains data for all offshore turbines, so subset to the right wind farm
 turbines <- all_turbs[which(all_turbs$NAAM %in% turbine_names),]
 rm(all_turbs)
-## Convert coordinates into geometry
+## Convert coordinates into geometry to WGS84
 turbines[,geometry:=st_transform(geometry,crs=wgs84_epsg)]
 ```
 
@@ -146,30 +149,19 @@ This part is generally required, and setting up the AoI can be adopted into a fu
 
 
 ```{r min_mad}
-area_of_inclusion <-  roi(location= c(r_lon, r_lat),
-                          inclusion_donut=c(mad,mid),
-                          exclusion_angle=b_corners,
-                          exclusion_location=turbines,
-                          exclusion_location_buffer=turb_exclusion_rad,
-                          crs_loc=loc_epsg)
+area_of_inclusion <- roi(location=c(4.185345,52.427827),
+                         distance=c(mad,mid),
+                         crs=loc_epsg,
+                         excl_angles=b_corners,
+                         excl_geom=turbines,
+                         excl_buffer=100,
+                         verbose=F
+                         )
 
 ## Add a tag to the turbines for whether they are in the proximity of the radar (bbox of AoI) mostly for plotting
-aoi_bbox <- st_as_sfc(st_bbox(aoi), crs=loc_epsg)
-turbines[,near_aoi:=sapply(st_transform(turbines[,geometry],crs=loc_epsg),st_within,y=aoi_bbox, sparse=FALSE)]
+aoi_bbox <- st_as_sfc(st_bbox(area_of_inclusion), crs=loc_epsg)
+turbines[,near_aoi:=sapply(turbines[,geometry],st_within,y=aoi_bbox, sparse=FALSE)]
 ```
-
-```{r visualize_inclusion}
-ggplot()+
-  geom_sf(data=area_of_inclusion, fill="grey", colour="black", lwd = 0.3)+
-  # geom_sf(data=st_zm(tracks_step1[,trajectory]), colour="black", lwd = 0.1)+
-  geom_sf(data=radar_loc, colour="darkred", shape=16, lwd = 0.7)+
-  labs(x="Longitude", y="Latitude", title=area_name)+
-  theme_minimal()+
-  theme(title = element_text(size=15, face="bold"),
-        axis.title = element_text(size=15, face="bold"),
-        axis.text = element_text(size=12, face="bold"))
-```
-
 This inclusion area can now be used to subset the data
 ```{r spatial_filter}
 ## Include all tracks that cross the zone of inclusion
@@ -194,10 +186,10 @@ Minimum and maximum airspeed
 Firstly we will look at the average airspeed of each track, and filter airspeeds lower and higher than biologically relevant.
 
 ```{r add_wind_info}
-tracks_step1 <- annotation(TRACKS=tracks_step1,
-                           ERA=era,
-                           VAR=c("U10m","V10m"),
-                           unit="hours")
+tracks_step1 <- weather(x=tracks_step1,
+                        era5=era,
+                        var=c("U10m","V10m"),
+                        unit="hours")
 ```
 
 ```{r calculate_filter_airspeed}
@@ -211,15 +203,22 @@ Secondly we identify non-biological movement (low displacement over time, or DoT
 The threshold for what DoT is considered too low has to be set manually by the research through visually inspecting the data.
 
 ```{r dot_threshold_calculations_visualizations}
-dot_perc_vals <- get_dot_percs(track_step1$displacement,track_step1$duration, probs=seq(0.002,0.02,0.002), plot=T)
+dot_perc_vals <- get_dot_percs(x=tracks_step1, probs=seq(0.002,0.02,0.002), context=area_of_inclusion)
 ```
 
 Based on the visualization, a stdp threshold has to be set
 ```{r set_dot_threshold}
 dot_threshold <- dot_perc_vals["1%"]
-
 tracks_step2 <- tracks_step1[dot > dot_threshold,]
 ```
+
+
+
+
+
+
+
+
 
 #2.2 Improving the quality of bird tracks
 Erroneous  points exist within some tracks, identifiable by a very short time-interval between those points and the next/previous point. Identify these intervals and remove both points involved with that interval, as there is no way to tell which of these two is faulty
@@ -258,7 +257,7 @@ tracks_step2[,point_error:=sapply(time_inter,
 FUNCTION END
 #############################################
 
-Now fix the trajectory, as discussed this can be incorporated with the previous function into one function. There are also a lot of posibilities for what to fix: only the trajectoy or all track parameters?
+Now fix the trajectory, as discussed this can be incorporated with the previous function into one function. There are also a lot of possibilities for what to fix: only the trajectoy or all track parameters?
 #############################################
 FUNCTION
 Input:
