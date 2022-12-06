@@ -67,8 +67,8 @@ get_airspeed <- function(groundspeed,
 #' @name movement
 #' @description annotate the trajectory with movement data
 #'
-#' @param TRACKS sf object with tracks
-#' @param VAR vector with movement metrics to add to tracks
+#' @param x sf object with tracks
+#' @param metrics vector with movement metrics to add to tracks
 #' @param crs
 #'
 #'
@@ -82,9 +82,11 @@ get_airspeed <- function(groundspeed,
 #' @examples
 #'
 #'
-movement <- function(TRACKS,
-                     VAR=c('n','duration', 'length', 'groundspeed', 'displacement', 'direction','dot'), # NOTE maybe timestamp_start and timestamp_end can be added as well
+movement <- function(x,
+                     metrics=c('n','duration', 'length', 'groundspeed', 'displacement', 'direction','dot'), # NOTE maybe timestamp_start and timestamp_end can be added as well
                      crs=loc_epsg){
+  TRACKS <- x
+  VAR <- metrics
   # all possible variables to compute
   vars_all <- c('n','duration', 'length', 'groundspeed', 'displacement', 'direction','dot')
 

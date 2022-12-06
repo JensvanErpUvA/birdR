@@ -5,16 +5,21 @@
 \alias{weather}
 \title{annotation}
 \usage{
-weather(x = tracks_step1, era5 = era, var = c("U10m", "V10m"), unit = "hours")
+weather(
+  x = tracks_step1,
+  era5 = era,
+  variables = c("U10m", "V10m"),
+  unit = "hours"
+)
 }
 \arguments{
+\item{x}{sf object with tracks}
+
+\item{era5}{path/file/API ERA5 dataset with annotation variables,}
+
+\item{variables}{vector with ERA5 variables to be annotated}
+
 \item{unit}{the annotation unit (hours)}
-
-\item{TRACKS}{sf object with tracks}
-
-\item{ERA}{path/file/API ERA5 dataset with annotation variables,}
-
-\item{VAR}{vector with ERA5 variables to be annotated}
 }
 \value{
 returns the tracks with era5 annotation

@@ -2,10 +2,9 @@
 #' @name get_dot_percs
 #' @description visualize percentiles
 #'
-#' @param displacement sf object with tracks
-#' @param duration path/file/API ERA5 dataset with annotation variables,
-#' @param probs vector with ERA5 variables to be annotated
-#' @param plot boolean (TRUE/FALSE) to plot the
+#' @param x sf object with tracks
+#' @param probs vector of probability bins
+#' @param context boolean (TRUE/FALSE) to plot the tracks of each probability bin
 #'
 #' @return returns dot perc vals
 #'

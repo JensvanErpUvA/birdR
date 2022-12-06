@@ -5,9 +5,9 @@
 #' @name annotation
 #' @description annotate the trajectory with environmental data
 #'
-#' @param TRACKS sf object with tracks
-#' @param ERA path/file/API ERA5 dataset with annotation variables,
-#' @param VAR vector with ERA5 variables to be annotated
+#' @param x sf object with tracks
+#' @param era5 path/file/API ERA5 dataset with annotation variables,
+#' @param variables vector with ERA5 variables to be annotated
 #' @param unit the annotation unit (hours)
 #'
 #' @return returns the tracks with era5 annotation
@@ -21,9 +21,10 @@
 #'
 weather <- function(x=tracks_step1,
                     era5=era,
-                    var=c("U10m","V10m"),
+                    variables=c("U10m","V10m"),
                     unit="hours"
                     ){
+  var <- variables
   ## Load in the wind data
   # if PATH name
   if(is.character(era5)){ # TODO double check if correct

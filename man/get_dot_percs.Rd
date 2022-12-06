@@ -7,13 +7,11 @@
 get_dot_percs(x, probs = seq(0.002, 0.02, 0.002), context = NULL)
 }
 \arguments{
-\item{probs}{vector with ERA5 variables to be annotated}
+\item{x}{sf object with tracks}
 
-\item{displacement}{sf object with tracks}
+\item{probs}{vector of probability bins}
 
-\item{duration}{path/file/API ERA5 dataset with annotation variables,}
-
-\item{plot}{boolean (TRUE/FALSE) to plot the}
+\item{context}{boolean (TRUE/FALSE) to plot the tracks of each probability bin}
 }
 \value{
 returns dot perc vals

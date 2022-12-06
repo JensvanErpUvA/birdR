@@ -5,15 +5,16 @@
 \title{movement}
 \usage{
 movement(
-  TRACKS,
-  VAR = c("n", "duration", "length", "groundspeed", "displacement", "direction", "dot"),
+  x,
+  metrics = c("n", "duration", "length", "groundspeed", "displacement", "direction",
+    "dot"),
   crs = loc_epsg
 )
 }
 \arguments{
-\item{TRACKS}{sf object with tracks}
+\item{x}{sf object with tracks}
 
-\item{VAR}{vector with movement metrics to add to tracks}
+\item{metrics}{vector with movement metrics to add to tracks}
 
 \item{crs}{}
 }
