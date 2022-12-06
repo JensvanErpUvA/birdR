@@ -60,19 +60,24 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">weather</span><span class="op">(</span>x <span class="op">=</span> <span class="va">tracks_step1</span>, era5 <span class="op">=</span> <span class="va">era</span>, var <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"U10m"</span>, <span class="st">"V10m"</span><span class="op">)</span>, unit <span class="op">=</span> <span class="st">"hours"</span><span class="op">)</span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="fu">weather</span><span class="op">(</span>
+  x <span class="op">=</span> <span class="va">tracks_step1</span>,
+  era5 <span class="op">=</span> <span class="va">era</span>,
+  variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"U10m"</span>, <span class="st">"V10m"</span><span class="op">)</span>,
+  unit <span class="op">=</span> <span class="st">"hours"</span>
+<span class="op">)</span></code></pre></div>
     </div>
 
     <div id="arguments">
     <h2>Arguments</h2>
-    <dl><dt>unit</dt>
-<dd><p>the annotation unit (hours)</p></dd>
-<dt>TRACKS</dt>
+    <dl><dt>x</dt>
 <dd><p>sf object with tracks</p></dd>
-<dt>ERA</dt>
+<dt>era5</dt>
 <dd><p>path/file/API ERA5 dataset with annotation variables,</p></dd>
-<dt>VAR</dt>
+<dt>variables</dt>
 <dd><p>vector with ERA5 variables to be annotated</p></dd>
+<dt>unit</dt>
+<dd><p>the annotation unit (hours)</p></dd>
 </dl></div>
     <div id="value">
     <h2>Value</h2>
