@@ -36,7 +36,7 @@ f <- list.files('../R',full.names = T)
 lapply(f, function(x) source(x))
 ```
 
-#1.1 Settings and filenames
+# 1.1 Settings and filenames
 
 Here all required filenames, radar information and processing settings are specified
 
@@ -104,8 +104,10 @@ min_time_inter <- 1.2/10
 raster_res <- 100
 ```
 
-#1.1 Data loading and class-converting
+# 1.1 Data loading and class-converting
+
 Should be user defined as this is highly specific to the user input and requirement. Perhaps there can be an "import function" for uvaRR that converts these variables from character strings automatically, but this is not high-priority
+
 ```{r data_loading_and_preprocessing}
 ## Load in tracking data
 #tracks_all <- fread(file=radar_filename)
@@ -137,9 +139,9 @@ rm(all_turbs)
 turbines[,geometry:=st_transform(geometry,crs=wgs84_epsg)]
 ```
 
-#2.1 Sub-setting based on prior knowledge
+# 2.1 Sub-setting based on prior knowledge
 
-##2.1.1 Spatial filtering
+## 2.1.1 Spatial filtering
 
 We apply the spatial filter by setting up an area of inclusion (AoI) geometry, which will be used to identify tracks outside of it to be removed. Three different filters can be used: 
 - inclusion_ring: include region between a minimum and maximum distance from the radar location. 
@@ -164,6 +166,7 @@ aoi_bbox <- st_as_sfc(st_bbox(area_of_inclusion), crs=loc_epsg)
 turbines[,near_aoi:=sapply(turbines[,geometry],st_within,y=aoi_bbox, sparse=FALSE)]
 ```
 This inclusion area can now be used to subset the data
+
 ```{r spatial_filter}
 ## Include all tracks that cross the zone of inclusion
 tracks_all[,intersects:=sapply(st_transform(st_zm(trajectory), crs=loc_epsg), st_intersects,
@@ -173,14 +176,14 @@ tracks_all[,intersects:=sapply(st_transform(st_zm(trajectory), crs=loc_epsg), st
 tracks_step1 <- tracks_all[intersects==TRUE,]
 ```
 
-##2.1.2 Biological filtering
+## 2.1.2 Biological filtering
 
 We have two track-specific filters
 
 At this point we need to calculate several track parameters
 ```{r get_parameters}
-tracks_step1 <- movement(TRACKS=tracks_step1,
-                         VAR=c('n','duration', 'length', 'groundspeed', 'displacement', 'direction','dot'), 
+tracks_step1 <- movement(x=tracks_step1,
+                         metrics=c('n','duration', 'length', 'groundspeed', 'displacement', 'direction','dot'), 
                          crs=loc_epsg)
 ```
 
@@ -193,7 +196,7 @@ load('../data/era.rda')
 
 tracks_step1 <- weather(x=tracks_step1,
                         era5=era,
-                        var=c("U10m","V10m"),
+                        variables=c("U10m","V10m"),
                         unit="hours")
 ```
 
@@ -202,7 +205,7 @@ tracks_step1[,airspeed := mapply(get_airspeed, groundspeed, direction, U10m, V10
 tracks_step1 <- tracks_step1[airspeed>=min_airspeed & airspeed<=max_airspeed,]
 ```
 
-##2.1.3 Non-biological movement
+## 2.1.3 Non-biological movement
 
 Secondly we identify non-biological movement (low displacement over time, or DoT) which is often related to clutter tracks. The threshold for what DoT is considered too low has to be set manually by the researcher through visually inspecting the data.
 
@@ -211,25 +214,27 @@ dot_perc_vals <- get_dot_percs(x=tracks_step1, probs=seq(0.002,0.02,0.002), cont
 ```
 
 Based on the visualization, a stdp threshold has to be set
+
 ```{r set_dot_threshold}
 dot_threshold <- dot_perc_vals["1%"]
 tracks_step2 <- tracks_step1[dot > dot_threshold,]
 ```
 
-#2.2 Improving the quality of bird tracks
+# 2.2 Improving the quality of bird tracks
 
 Erroneous  points exist within some tracks, identifiable by a very short time-interval between those points and the next/previous point. Identify these intervals and remove both points involved with that interval, as there is no way to tell which of these two is faulty
 
 ```{r fix_tracks}
 ## Copy tracks for last processing module
-error_points <- fix_geom(tracks_step2, dt=min_time_inter)
+error_points <- fix_geom(x=tracks_step2, 
+                         dt=min_time_inter)
 tracks_step3 <- tracks_step2
 ```
 
 
-#2.3 Removing data sections with negative observation bias
+# 2.3 Removing data sections with negative observation bias
 
-#2.3.1 Detecting temporal NOB
+# 2.3.1 Detecting temporal NOB
 
 ```{r NOB_variable}
 ## Read in our NOB variable: masking data
@@ -240,11 +245,15 @@ mask_data[,timestamp:=ymd_hms(timestamp, tz="UTC")]
 ```
 
 ```{r NOB}
-tracks_step3 <-nob(x=tracks_step3, m=mask_data, unit='hour')
+tracks_step3 <-nob(x=tracks_step3, 
+                   m=mask_data, 
+                   unit='hour')
 tracks_step4 <- tracks_step3[!(masked),]
 ```
 
-#2.3.2 Detecting spatial bias
+# 2.3.2 Detecting spatial bias
+
+## using original function used by Jens 
 
 ```{r raster_visualization4}
 e <- st_transform(area_of_inclusion,crs=loc_epsg) %>% 
@@ -279,13 +288,16 @@ ggplot()+
         axis.text = element_text(size=12, face="bold"))
 ```
 
+## using an updated function 
+
 ```{r raster_visualization1}
-track_raster <- rasterizer(data=vect(tracks_step3[,trajectory]),resolution=100)
+track_rasterB <- rasterizer(data=vect(tracks_step4[,trajectory]),
+                           resolution=100)
 ```
 
 ```{r raster_visualization2}
 # ## First visual inspection. Convert the data to a data.frame for plotting. Use the spatial mask set in step 2.1.1 to remove "dead" cells
-fig_rast_data <- terra::as.data.frame(terra::mask(track_raster,vect(area_of_inclusion)),xy=TRUE)
+fig_rast_data <- terra::as.data.frame(terra::mask(track_rasterB,vect(area_of_inclusion)),xy=TRUE)
 setnames(fig_rast_data, c("x","y"),c("lon","lat"))
 
 ggplot()+
@@ -301,32 +313,25 @@ ggplot()+
         axis.text = element_text(size=12, face="bold"))
 ```
 
-
-# analysis of the raster based on GAM
-
-```{r spatial_gam_analysis}
-gam <- rastgam(track_raster,radar=radar)
-tracks_step4 <- distb(x=tracks_step4,track_raster,radar=radar,distance=c(mid,mad))
-tracks_final <- tracks_step4[within_raster==TRUE,]
-
-
-```
-
+## analysis of the raster based on GAM
 
 Lastly, the spatial threshold should be set. This is based on the visualization of the gam again. In our example the gam curve itself is used to set the threshold. Here it is a bit more complicated to retrieve which cells cross the threshold. However I don't know how useful a function for this would be still.
 
-```{r set_spat_threshold}
+## original raster function 
 
-
-
-
-
+```{r spatial_gam_analysis}
+#gam <- rastgam(track_raster,radar=radar)
+tracks_step5 <- distb(x=tracks_step4,track_raster,radar=radar,distance=c(mid,mad))
+tracks_final <- tracks_step5[crosses_raster==TRUE,]
+nrow(tracks_final)
 ```
 
-Now filter based on whether a track is intersecting the raster
+## updated raster function 
 
-```{r spatial_filter2}
-tracks_final <- tracks_step3[within_raster==TRUE,]
+```{r spatial_gam_analysisB}
+#gam <- rastgam(track_rasterB,radar=radar)
+tracks_step6 <- distb(x=tracks_step4,track_rasterB,radar=radar,distance=c(mid,mad))
+tracks_final <- tracks_step6[crosses_raster==TRUE,]
+nrow(tracks_final)
 ```
 
-Done!
