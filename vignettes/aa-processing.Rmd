@@ -41,7 +41,8 @@ lapply(f, function(x) source(x))
 Here all required filenames, radar information and processing settings are specified
 
 ```{r settings_and_filenames}
-## File names
+## File names ##
+
 ## Bird tracks
 radar_filename <- "lud_bird-tracks_bare_w1_06-20.csv"
 ## Radar masking intensity of the horizontal radar
@@ -52,53 +53,58 @@ ERA5_filename <- "lud_ERA5_10m-windcomp_06-20.csv"
 # turbine_filename <- "D:/SURFDrive/R/shapefiles/turbines_en_ohvs.shp"
 turbine_filename <- "turbines_en_ohvs.shp"
 
-## General
+## General ##
 ## Area name
-area_name <- "Luchterduinen"
+area_name <- "Luchterduinen" 
+
 ## Start and end time of data (hourly resolution, UTC)
 data_start_time <- ymd_hms("2020-06-01 00:00:00", tz="UTC")
 data_end_time <- ymd_hms("2020-06-07 23:00:00", tz="UTC")
 
+## Projections
+wgs84_epsg <- 4326 
+loc_epsg <- 23095 
+
 ## Radar coordinates [degrees]
 r_lon <- 4.185345
 r_lat <- 52.427827
+radar <- sf::st_sfc(sf::st_point(c(r_lon, r_lat)),crs=wgs84_epsg)
 
-## Projections
-wgs84_epsg <- 4326
-loc_epsg <- 23095
-wgs84_proj <- "+proj=longlat +datum=WGS84 +no_defs "
-loc_proj <- "+proj=tmerc +lat_0=0 +lon_0=5 +k=0.9996 +x_0=500000 +y_0=0 +ellps=intl +towgs84=-87,-98,-121,0,0,0,0 +units=m +no_defs"
 
-radar <- sf::st_sfc(sf::st_point(c(r_lon, r_lat)),crs=4326)
-
-## Module 1 parameters
+##### Module 1 parameters ##### 
 ## Step 1
 ## Set the minimum and maximum distance from the radar for reliable bird detection [m]
-mid <- 1000
-mad <- 2500
+mid <- 1000 ## [metres]
+mad <- 2500 ## [metres]
+
 ## The radar is situated near an offshore windfarm
 ## Corner of the radar window the turbine blocks the radar
 ## Corner of overlap between the horizontal and vertical radar (few horizontal-only tracks)
 b_corners <- rbind(c(287,30),
                    c(115,135))
+
 ## Turbine names (for coordinate extraction from main file)
 turbine_names <- "Luchterduinen"
+
 ## Turbine mask: circle radius
 turb_exclusion_rad <- 100 ## [metres]
+
 ## Step 2
 ## Minimum and maximum airspeed [m/s]
 min_airspeed <- 5
 max_airspeed <- 30
+
 ## Percentiles to visualize for DoT threshold
 dot_percs <- seq(0.002,0.02,0.002)
 
-## Module 2 parameters
+##### Module 2 parameters #####
 ## Step 3
 ## Minimum time interval between consequtive observations [s]. 
 ## This much shorter than the radar rotation speed to allow for differences in observation time (10%)
 min_time_inter <- 1.2/10 
 
-## Module 3 parameters
+
+##### Module 3 parameters #####
 ## Step 5
 ## Resolution of spatial raster for detecting spatial bias [m]
 raster_res <- 100
@@ -111,21 +117,21 @@ Should be user defined as this is highly specific to the user input and requirem
 ```{r data_loading_and_preprocessing}
 ## Load in tracking data
 #tracks_all <- fread(file=radar_filename)
-load('../data/tracks_all.rda')
+load('../data/tracks.rda')
 
 ## Data contains two timestamps: the start and end of each track
 ## Convert timestamps (characters) into POSIXct objects, with timezone = UTC
-tracks_all[,timestamp_start := ymd_hms(timestamp_start, tz="UTC")]
-tracks_all[,timestamp_end := ymd_hms(timestamp_end, tz="UTC")]
+tracks[,timestamp_start := ymd_hms(timestamp_start, tz="UTC")]
+tracks[,timestamp_end := ymd_hms(timestamp_end, tz="UTC")]
 
 ## Convert trajectory into spatial class
-tracks_all <- st_as_sf(tracks_all,
+tracks <- st_as_sf(tracks,
                        wkt="trajectory",
                        crs=wgs84_epsg)
-tracks_all <- as.data.table(tracks_all)
+tracks <- as.data.table(tracks)
 
 # sample for testing 
-#tracks_all <- tracks_all[sample(1:nrow(tracks_all),10000),]
+# tracks <- tracks[sample(1:nrow(tracks),10000),]
 
 ## Location specific: load in turbines
 ## Load in turbines
@@ -141,6 +147,12 @@ turbines[,geometry:=st_transform(geometry,crs=wgs84_epsg)]
 
 # 2.1 Sub-setting based on prior knowledge
 
+Three sets of filters based on prior knowledge are performed: 
+
+* A spatial filtering based on known areas with unreliable data (2.1.1)
+* A biological filter based on impossible airspeed (2.1.2)
+* A filtering of non-biological movement, based on low displacement over time (2.1.3)
+
 ## 2.1.1 Spatial filtering
 
 We apply the spatial filter by setting up an area of inclusion (AoI) geometry, which will be used to identify tracks outside of it to be removed. Three different filters can be used: 
@@ -150,46 +162,51 @@ We apply the spatial filter by setting up an area of inclusion (AoI) geometry, w
 
 This part is generally required, and setting up the AoI can be adopted into a function (minus the turbines, which is too specific imo). 
 
-
 ```{r min_mad}
 area_of_inclusion <- roi(location=c(4.185345,52.427827),
                          distance=c(mad,mid),
                          crs=loc_epsg,
                          excl_angles=b_corners,
                          excl_geom=turbines,
-                         excl_buffer=100,
+                         excl_buffer=turb_exclusion_rad,
                          verbose=F
                          )
+
+# any information used in the computation of the area_of_inclusion is stored as attributes 
+# attr(area_of_inclusion,'location')
+# attr(area_of_inclusion,'location_crs')
+# attr(area_of_inclusion,'distance')
+# attr(area_of_inclusion,'exclusion_angles')
+# attr(area_of_inclusion,'exclusion_geom')
+# attr(area_of_inclusion,'exclusion_buffer')
 
 ## Add a tag to the turbines for whether they are in the proximity of the radar (bbox of AoI) mostly for plotting
 aoi_bbox <- st_as_sfc(st_bbox(area_of_inclusion), crs=loc_epsg)
 turbines[,near_aoi:=sapply(turbines[,geometry],st_within,y=aoi_bbox, sparse=FALSE)]
 ```
+
 This inclusion area can now be used to subset the data
 
 ```{r spatial_filter}
 ## Include all tracks that cross the zone of inclusion
-tracks_all[,intersects:=sapply(st_transform(st_zm(trajectory), crs=loc_epsg), st_intersects,
+tracks[,intersects:=sapply(st_transform(st_zm(trajectory), crs=loc_epsg), st_intersects,
                                y=st_transform(area_of_inclusion, crs=loc_epsg), sparse=FALSE)]
 
 ## Filter tracks
-tracks_step1 <- tracks_all[intersects==TRUE,]
+tracks_step1 <- tracks[intersects==TRUE,]
 ```
 
 ## 2.1.2 Biological filtering
 
-We have two track-specific filters
+As a prerequisite to subsequent filtering steps we need to derive a number of dependent movement metrics. These movement metrics require as minimum requirements to have a trajectory geometry and a start and end timestamp (and some form of time information for each point in a trajectory). See the function manual for the definition of each movement metric. 
 
-At this point we need to calculate several track parameters
 ```{r get_parameters}
 tracks_step1 <- movement(x=tracks_step1,
                          metrics=c('n','duration', 'length', 'groundspeed', 'displacement', 'direction','dot'), 
                          crs=loc_epsg)
 ```
 
-Minimum and maximum airspeed
-
-Firstly we will look at the average airspeed of each track, and filter airspeeds lower and higher than biologically relevant.
+For filtering purposes it is also necessary to have correct estimates of the airspeed of the trajectories. Therefore, we annotate the necessary weather information (U and V) derived from the era5 dataset for the specific radar location to the trajectories using the function weather. Since data is hourly we perform a join using rounded timestamp information.  
 
 ```{r add_wind_info}
 load('../data/era.rda')
@@ -200,6 +217,8 @@ tracks_step1 <- weather(x=tracks_step1,
                         unit="hours")
 ```
 
+Then we calculate the average airspeed of each track using the function get_airspeed, and filter airspeeds lower and higher than biologically relevant.
+
 ```{r calculate_filter_airspeed}
 tracks_step1[,airspeed := mapply(get_airspeed, groundspeed, direction, U10m, V10m)]
 tracks_step1 <- tracks_step1[airspeed>=min_airspeed & airspeed<=max_airspeed,]
@@ -207,7 +226,7 @@ tracks_step1 <- tracks_step1[airspeed>=min_airspeed & airspeed<=max_airspeed,]
 
 ## 2.1.3 Non-biological movement
 
-Secondly we identify non-biological movement (low displacement over time, or DoT) which is often related to clutter tracks. The threshold for what DoT is considered too low has to be set manually by the researcher through visually inspecting the data.
+Next we identify non-biological movement (low displacement over time, or DoT) which is often related to clutter tracks. The threshold for what DoT is considered too low has to be set manually by the researcher through visually inspecting the data.
 
 ```{r dot_threshold_calculations_visualizations}
 dot_perc_vals <- get_dot_percs(x=tracks_step1, probs=seq(0.002,0.02,0.002), context=area_of_inclusion)
@@ -222,13 +241,14 @@ tracks_step2 <- tracks_step1[dot > dot_threshold,]
 
 # 2.2 Improving the quality of bird tracks
 
-Erroneous  points exist within some tracks, identifiable by a very short time-interval between those points and the next/previous point. Identify these intervals and remove both points involved with that interval, as there is no way to tell which of these two is faulty
+Erroneous points exist within some tracks, identifiable by a very short time-interval between those points and the next/previous point. Identify these intervals and remove both points involved with that interval, as there is no way to tell which of these two is faulty. The function fixes the input trajectories and returns the tracks with erroneous points. This function
 
 ```{r fix_tracks}
-## Copy tracks for last processing module
-error_points <- fix_geom(x=tracks_step2, 
+tracks_step3 <- fix_geom(x=tracks_step2, 
                          dt=min_time_inter)
-tracks_step3 <- tracks_step2
+
+# points which required recalculation
+error <- tracks_step3[point_error==TRUE,]
 ```
 
 
@@ -245,93 +265,48 @@ mask_data[,timestamp:=ymd_hms(timestamp, tz="UTC")]
 ```
 
 ```{r NOB}
-tracks_step3 <-nob(x=tracks_step3, 
-                   m=mask_data, 
-                   unit='hour')
-tracks_step4 <- tracks_step3[!(masked),]
+plot <- nob(x=tracks_step3, m=mask_data, unit='hour')
+plotly::ggplotly(plot)
+tracks_step3 <- tracks_step3[masked==FALSE,]
 ```
 
 # 2.3.2 Detecting spatial bias
 
-## using original function used by Jens 
 
-```{r raster_visualization4}
+## using an updated function 
+
+```{r raster_visualization1}
 e <- st_transform(area_of_inclusion,crs=loc_epsg) %>% 
   st_buffer(2*raster_res) %>% 
   st_transform(st_crs(area_of_inclusion)) %>%
   vect() %>%
   ext() 
 
-track_raster <- track_density_rast(data=tracks_step4[,trajectory], 
-                                   crs=loc_proj, 
-                                   e=e,
-                                   resolution = raster_res)
-```
+# track_rasterB <- rasterizer(data=vect(tracks_step3[,trajectory]),
+#                             e=e,
+#                             crs=st_crs(loc_epsg)$wkt,
+#                             resolution=raster_res)
 
-Visualization of the raster
-
-```{r raster_visualization3}
-# ## First visual inspection. Convert the data to a data.frame for plotting. Use the spatial mask set in step 2.1.1 to remove "dead" cells
-fig_rast_data <- terra::as.data.frame(mask(track_raster,vect(area_of_inclusion)),xy=TRUE)
-setnames(fig_rast_data, c("x","y"),c("lon","lat"))
-
-ggplot()+
-  geom_tile(data=fig_rast_data, aes(x=lon,y=lat,fill=tracks))+
-  geom_sf(data=area_of_inclusion, fill=NA, colour="black", lwd = 0.3)+
-  geom_sf(data=turbines[near_aoi==TRUE,geometry], colour="black", lwd = 0.1)+
-  geom_sf(data=radar, colour="darkred", shape=16, lwd = 0.7)+
-  scale_fill_gradient(low="grey", high="darkblue", name="Number\n of tracks")+
-  labs(x="Longitude", y="Latitude", title=area_name)+
-  theme_minimal()+
-  theme(title = element_text(size=15, face="bold"),
-        axis.title = element_text(size=15, face="bold"),
-        axis.text = element_text(size=12, face="bold"))
-```
-
-## using an updated function 
-
-```{r raster_visualization1}
-track_rasterB <- rasterizer(data=vect(tracks_step4[,trajectory]),
-                           resolution=100)
-```
-
-```{r raster_visualization2}
-# ## First visual inspection. Convert the data to a data.frame for plotting. Use the spatial mask set in step 2.1.1 to remove "dead" cells
-fig_rast_data <- terra::as.data.frame(terra::mask(track_rasterB,vect(area_of_inclusion)),xy=TRUE)
-setnames(fig_rast_data, c("x","y"),c("lon","lat"))
-
-ggplot()+
-  geom_tile(data=fig_rast_data, aes(x=lon,y=lat,fill=tracks))+
-  geom_sf(data=area_of_inclusion, fill=NA, colour="black", lwd = 0.3)+
-  geom_sf(data=turbines[near_aoi==TRUE,geometry], colour="black", lwd = 0.1)+
-  geom_sf(data=radar, colour="darkred", shape=16, lwd = 0.7)+
-  scale_fill_gradient(low="grey", high="darkblue", name="Number\n of tracks")+
-  labs(x="Longitude", y="Latitude", title=area_name)+
-  theme_minimal()+
-  theme(title = element_text(size=15, face="bold"),
-        axis.title = element_text(size=15, face="bold"),
-        axis.text = element_text(size=12, face="bold"))
+track_raster <- rasterizer(data=vect(tracks_step3[,trajectory]),
+                           e=e,
+                           crs=st_crs(loc_epsg)$wkt,
+                           resolution=raster_res, 
+                           aoi=area_of_inclusion)
 ```
 
 ## analysis of the raster based on GAM
 
-Lastly, the spatial threshold should be set. This is based on the visualization of the gam again. In our example the gam curve itself is used to set the threshold. Here it is a bit more complicated to retrieve which cells cross the threshold. However I don't know how useful a function for this would be still.
-
-## original raster function 
-
-```{r spatial_gam_analysis}
-#gam <- rastgam(track_raster,radar=radar)
-tracks_step5 <- distb(x=tracks_step4,track_raster,radar=radar,distance=c(mid,mad))
-tracks_final <- tracks_step5[crosses_raster==TRUE,]
-nrow(tracks_final)
-```
-
-## updated raster function 
+Lastly, the spatial threshold should be set. This is based on the visualization of the gam again. In our example the gam curve itself is used to set the threshold. Here it is a bit more complicated to retrieve which cells cross the threshold. 
 
 ```{r spatial_gam_analysisB}
-#gam <- rastgam(track_rasterB,radar=radar)
-tracks_step6 <- distb(x=tracks_step4,track_rasterB,radar=radar,distance=c(mid,mad))
-tracks_final <- tracks_step6[crosses_raster==TRUE,]
+plot <- distb(x=tracks_step3,
+              y=track_raster,
+              radar=radar,
+              distance=c(mid,mad),
+              aoi=area_of_inclusion)
+plotly::ggplotly(plot)
+
+tracks_final <- tracks_step3[crosses_raster==TRUE,]
 nrow(tracks_final)
 ```
 

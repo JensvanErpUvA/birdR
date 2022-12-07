@@ -29,7 +29,7 @@
 #' trajectories
 #'
 #'
-#' @format ## `tracks_all`
+#' @format ## `tracks`
 #' \describe{
 #'   \item{id}{unique_identifier}
 #'   \item{timestamp_start}{UTC timestamp corresponding to the first location of a bird-track}
@@ -37,7 +37,7 @@
 #'   \item{trajectory_time}{offset seconds from timestamp_start for each location in a bird-track}
 #'   \item{trajectory}{linestring geometry corresponding to a bird-track}
 #' }
-"tracks_all"
+"tracks"
 #NOTE for package we cannot store the whole tracks_all dataset if we want to publish in CRAN. We could store a sample and make a data package for the complete dataset which we can store and archive in github and figshare/zenodo.
 
 #' turbines

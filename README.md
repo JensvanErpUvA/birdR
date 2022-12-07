@@ -61,6 +61,26 @@ remotes::install_git("http://gitlabdeploytoken658893:z661w3sBPtdvSAHxLCLs@gitlab
 
 # Usage 
 
+For a typical analysis workflow, please check the [vignette](https://uva_ibed_ame.gitlab.io/robin_radar/birdar/articles/aa-processing.html).  
+
+### data 
+
+Four sample datasets are available within the R-package. 
+
+```r
+# tracks (robin radar database)
+tracks
+
+# wind turbines at sea of NL 
+turbines 
+
+# era5 weather data
+era
+
+# landmask (robin radar database)
+landmask
+```
+
 ### area of inclusion 
 
 see more examples at [roi](https://uva_ibed_ame.gitlab.io/robin_radar/birdar/reference/roi.html)
@@ -101,25 +121,6 @@ annotation <- weather(x=annotation,
                       
 # annotate airspeed     
 annotation[,airspeed := mapply(get_airspeed, groundspeed, direction, U10m, V10m)]
-```
-
-
-### data 
-
-Four sample datasets are available within the R-package. 
-
-```r
-# tracks (robin radar database)
-tracks_all 
-
-# wind turbines at sea of NL 
-turbines 
-
-# era5 weather data
-era
-
-# landmask (robin radar database)
-landmask
 ```
 
 ## Description

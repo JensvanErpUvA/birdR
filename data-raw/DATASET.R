@@ -1,4 +1,7 @@
 ## code to prepare `DATASET` dataset goes here
+library(data.table)
+
+# read source files
 files <- list.files('/Users/jedgroev/surfdrive/Shared/Methodology Paper data',full.names = T)
 files <- files[!grepl('.Rmd',files)]
 
@@ -12,8 +15,8 @@ era <- fread(files[grepl('ERA5',files)])
 usethis::use_data(era, overwrite = TRUE)
 
 #### 3. tracks ####
-tracks_all <- fread(files[grepl('bird-tracks_bare_w1',files)][1])
-usethis::use_data(tracks_all, overwrite = TRUE)
+tracks <- fread(files[grepl('bird-tracks_bare_w1',files)][1])
+usethis::use_data(tracks, overwrite = TRUE)
 
 #### 4. mask ####
 landmask <- fread(files[grepl('landmask',files)])
