@@ -32,8 +32,8 @@ library(dplyr)
 
 library(mgcv)
 library(birdar)
-f <- list.files('../R',full.names = T)
-lapply(f, function(x) source(x))
+# f <- list.files('../R',full.names = T)
+# lapply(f, function(x) source(x))
 ```
 
 # 1.1 Settings and filenames
@@ -114,10 +114,10 @@ raster_res <- 100
 
 Should be user defined as this is highly specific to the user input and requirement. Perhaps there can be an "import function" for uvaRR that converts these variables from character strings automatically, but this is not high-priority
 
-```{r data_loading_and_preprocessing}
+```{r data_loading_and_preprocessing }
 ## Load in tracking data
 #tracks_all <- fread(file=radar_filename)
-load('../data/tracks.rda')
+#load('../data/tracks.rda')
 
 ## Data contains two timestamps: the start and end of each track
 ## Convert timestamps (characters) into POSIXct objects, with timezone = UTC
@@ -131,12 +131,12 @@ tracks <- st_as_sf(tracks,
 tracks <- as.data.table(tracks)
 
 # sample for testing 
-tracks <- tracks[sample(1:nrow(tracks),10000),]
+#tracks <- tracks[sample(1:nrow(tracks),10000),]
 
 ## Location specific: load in turbines
 ## Load in turbines
 #all_turbs <- as.data.table(st_read(turbine_filename))
-load('../data/turbines.rda')
+#load('../data/turbines.rda')
 all_turbs <- as.data.table(turbines)
 ## Our file contains data for all offshore turbines, so subset to the right wind farm
 turbines <- all_turbs[which(all_turbs$NAAM %in% turbine_names),]
@@ -209,7 +209,8 @@ tracks_step1 <- movement(x=tracks_step1,
 For filtering purposes it is also necessary to have correct estimates of the airspeed of the trajectories. Therefore, we annotate the necessary weather information (U and V) derived from the era5 dataset for the specific radar location to the trajectories using the function weather. Since data is hourly we perform a join using rounded timestamp information.  
 
 ```{r add_wind_info}
-load('../data/era.rda')
+#load('../data/era.rda')
+#era
 
 tracks_step1 <- weather(x=tracks_step1,
                         era5=era,
@@ -258,14 +259,17 @@ error <- tracks_step3[point_error==TRUE,]
 
 ```{r NOB_variable}
 ## Read in our NOB variable: masking data
-load('../data/landmask.rda')
+#load('../data/landmask.rda')
 mask_data <- landmask
 ## Convert timestamp into POSIXct
 mask_data[,timestamp:=ymd_hms(timestamp, tz="UTC")]
 ```
 
-```{r NOB}
+```{r NOB1}
 plot <- nob(x=tracks_step3, m=mask_data, unit='hour')
+```
+
+```{r NOB2, message=FALSE, warning=FALSE, dpi=180, fig.width = 4.5, fig.height=2}
 plotly::ggplotly(plot)
 tracks_step3 <- tracks_step3[masked==FALSE,]
 ```
@@ -293,15 +297,18 @@ track_raster <- rasterizer(data=vect(tracks_step3[,trajectory]),
 
 Lastly, the spatial threshold should be set. This is based on the visualization of the gam again. In our example the gam curve itself is used to set the threshold. Here it is a bit more complicated to retrieve which cells cross the threshold. 
 
-```{r spatial_gam_analysisB}
+```{r spatial_gam_analysisB1}
 plot <- distb(x=tracks_step3,
               y=track_raster,
               radar=radar,
               distance=c(mid,mad),
               aoi=area_of_inclusion)
+```
+
+
+```{r spatial_gam_analysisB2, message=FALSE, warning=FALSE, dpi=180, fig.width = 4.5, fig.height=2}
 plotly::ggplotly(plot)
 
 tracks_final <- tracks_step3[crosses_raster==TRUE,]
-nrow(tracks_final)
 ```
 
