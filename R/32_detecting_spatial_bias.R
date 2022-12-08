@@ -296,6 +296,8 @@ crosses_aoi <- function(trajectory, raster) {
 #' @return a raster with counts per grid cell
 #'
 #'
+#' @export
+#'
 #' @examples
 #'
 #'

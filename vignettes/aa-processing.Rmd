@@ -31,7 +31,7 @@ library(ggplot2)
 library(dplyr)
 
 library(mgcv)
-#library(birdar)
+library(birdar)
 f <- list.files('../R',full.names = T)
 lapply(f, function(x) source(x))
 ```
@@ -131,7 +131,7 @@ tracks <- st_as_sf(tracks,
 tracks <- as.data.table(tracks)
 
 # sample for testing 
-# tracks <- tracks[sample(1:nrow(tracks),10000),]
+tracks <- tracks[sample(1:nrow(tracks),10000),]
 
 ## Location specific: load in turbines
 ## Load in turbines
@@ -272,9 +272,6 @@ tracks_step3 <- tracks_step3[masked==FALSE,]
 
 # 2.3.2 Detecting spatial bias
 
-
-## using an updated function 
-
 ```{r raster_visualization1}
 e <- st_transform(area_of_inclusion,crs=loc_epsg) %>% 
   st_buffer(2*raster_res) %>% 
@@ -293,8 +290,6 @@ track_raster <- rasterizer(data=vect(tracks_step3[,trajectory]),
                            resolution=raster_res, 
                            aoi=area_of_inclusion)
 ```
-
-## analysis of the raster based on GAM
 
 Lastly, the spatial threshold should be set. This is based on the visualization of the gam again. In our example the gam curve itself is used to set the threshold. Here it is a bit more complicated to retrieve which cells cross the threshold. 
 
