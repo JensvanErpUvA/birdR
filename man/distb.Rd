@@ -4,10 +4,12 @@
 \alias{distb}
 \title{distb}
 \usage{
-distb(x, y, aoi, radar, distance = c(mid, mad))
+distb(x, y, aoi = NULL, radar = NULL, distance = NULL)
 }
 \arguments{
 \item{x}{track dataset}
+
+\item{aoi}{area of interest}
 
 \item{radar}{radar location}
 
