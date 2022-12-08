@@ -8,7 +8,7 @@
 #' @param data spatvector object (points)
 #' @param resolution resolution
 #' @param fun summary function
-#' @param crs
+#' @param crs coordinate reference system
 #' @param e minimum x value of extent in lonlat
 #' @param aoi area of inclusion
 #'
@@ -100,7 +100,7 @@ rasterize_basic <- function(data=NULL, resolution=100, crs=NULL, fun='weighted',
 #' @param data spatvector object (points)
 #' @param resolution resolution
 #' @param var variable to loop over
-#' @param crs
+#' @param crs coordinate reference system
 #' @param e minimum x value of extent
 #' @param aoi area of inclusion
 #'

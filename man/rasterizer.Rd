@@ -21,6 +21,8 @@ rasterizer(
 
 \item{var}{variable to loop over}
 
+\item{crs}{coordinate reference system}
+
 \item{e}{minimum x value of extent}
 
 \item{aoi}{area of inclusion}

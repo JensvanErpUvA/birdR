@@ -17,6 +17,8 @@ rasterize_basic(
 
 \item{resolution}{resolution}
 
+\item{crs}{coordinate reference system}
+
 \item{fun}{summary function}
 
 \item{e}{minimum x value of extent in lonlat}
