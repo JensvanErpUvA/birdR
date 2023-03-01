@@ -119,6 +119,8 @@ Should be user defined as this is highly specific to the user input and requirem
 #tracks_all <- fread(file=radar_filename)
 #load('../data/tracks.rda')
 tracks
+#tracks<-tracks[1:10000,]
+
 ## Data contains two timestamps: the start and end of each track
 ## Convert timestamps (characters) into POSIXct objects, with timezone = UTC
 tracks[,timestamp_start := ymd_hms(timestamp_start, tz="UTC")]
@@ -258,7 +260,7 @@ error <- tracks_step3[point_error==TRUE,]
 
 # 2.3 Removing data sections with negative observation bias
 
-# 2.3.1 Detecting temporal negative observation bias (NOB)
+## 2.3.1 Detecting temporal negative observation bias (NOB)
 
 ```{r NOB_variable}
 ## Read in our NOB variable: masking data
@@ -268,7 +270,7 @@ mask_data <- landmask
 mask_data[,timestamp:=ymd_hms(timestamp, tz="UTC")]
 ```
 
-```{r NOB_function}
+```{r NOB_function, message=FALSE, warning=FALSE, dpi=180, fig.width = 4.5, fig.height=2}
 plot <- nob(x=tracks_step3, m=mask_data, unit='hour')
 ```
 
@@ -282,9 +284,9 @@ tracks_step3 <- tracks_step3[masked==FALSE,]
 ```
 
 
-# 2.3.2 Detecting spatial observation bias
+## 2.3.2 Detecting spatial observation bias
 
-```{r raster_visualization_function}
+```{r raster_visualization_function, message=FALSE, warning=FALSE, dpi=180, fig.width = 4.5, fig.height=2}
 e <- st_transform(area_of_inclusion,crs=loc_epsg) %>% 
   st_buffer(2*raster_res) %>% 
   st_transform(st_crs(area_of_inclusion)) %>%
@@ -306,7 +308,7 @@ track_raster <- rasterizer(data=vect(tracks_step3[,trajectory]),
 
 Lastly, the spatial threshold should be set. This is based on the visualization of the gam again. In our example the gam curve itself is used to set the threshold. Here it is a bit more complicated to retrieve which cells cross the threshold. 
 
-```{r spatial_gam_analysis_function}
+```{r spatial_gam_analysis_function, message=FALSE, warning=FALSE, dpi=180, fig.width = 4.5, fig.height=2}
 plot <- distb(x=tracks_step3,
               y=track_raster,
               radar=radar,
