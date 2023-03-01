@@ -92,6 +92,8 @@ movement <- function(x,
 
   ## In RR system track durations per plot are given as a long character string, pull apart and make into list of numbers
 
+  ## JUTS ANOTHER TEST
+
   ## THIS IS ROBIN SPECIFIC SO SHOULD ONLY BE PERFORMED FOR ROBIN
   TRACKS[,traj_time:=lapply(
     strsplit(
