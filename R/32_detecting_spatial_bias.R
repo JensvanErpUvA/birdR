@@ -1,5 +1,6 @@
 #'@importFrom terra crs rast ext vect project res as.data.frame mask distance values
 #'@importFrom plotly ggplotly
+#'@importFrom data.table as.data.table
 
 #' @title rasterize_basic
 #'
@@ -52,7 +53,7 @@ rasterize_basic <- function(data=NULL, resolution=100, crs=NULL, fun='weighted',
   }
 
 
-  if(geomtype(data) == 'points'){
+  if(terra::geomtype(data) == 'points'){
     R <- rasterize(data,r,fun=fun)
   } else {
     if(geomtype(data) == 'lines'){
@@ -70,7 +71,7 @@ rasterize_basic <- function(data=NULL, resolution=100, crs=NULL, fun='weighted',
       #     plyr::count() %>%
       #     left_join(x=r_df,by= c('lyr.1','x','y'))
       # }
-        p <- as.data.table(extract(r, data, xy=TRUE))
+        p <- data.table::as.data.table(extract(r, data, xy=TRUE))
         if(fun=='weighted'){
           p[,cell_num:=1/length(lyr.1), by=ID]
           p[,freq:=sum(cell_num), by=lyr.1]
@@ -81,7 +82,7 @@ rasterize_basic <- function(data=NULL, resolution=100, crs=NULL, fun='weighted',
         }
         p[,c("ID","cell_num"):=NULL]
         p <- unique(p, by="lyr.1") %>%
-          left_join(x=r_df, by=c('lyr.1','x','y'))
+          dplyr::left_join(x=r_df, by=c('lyr.1','x','y'))
 
       p[which(is.na(p$freq)),'freq'] <- 0
       R <- r
@@ -294,7 +295,7 @@ crosses_aoi <- function(trajectory, raster) {
 #' @param radar radar location
 #' @param distance default mid mad
 #' @param aoi area of interest
-#' @param verbose boolean (TRUE/FALSE), print messages and plot results when TRUE
+#' @param verbose boolean (TRUE/FALSE), print messages and plot raster when TRUE
 #'
 #' @return a raster with counts per grid cell
 #'
@@ -306,7 +307,7 @@ crosses_aoi <- function(trajectory, raster) {
 #'
 #' \dontrun{
 #' x <- tracks[sample(1:nrow(tracks),10000),]
-#' y <- track_density_rast(tracks$trajectory,resolution=100)
+#' y <- rasterizer(tracks$trajectory,resolution=100)
 #' radar <- sf::st_sfc(sf::st_point(c(4.185345,  52.427827)),crs=4326)
 #' distance <- c(1000,2500)
 #' distb(x,y, radar, distance,aoi=NULL)
@@ -329,7 +330,7 @@ distb <- function(x,y,aoi=NULL,radar=NULL,distance=NULL, verbose=T){
   rastgam_output <- rastgam(x=track_raster,radar=radar, distance=distance)
   gam_distbias <- rastgam_output[[1]]
   rast_data <- rastgam_output[[2]]
-  plot <- rastgam_output[[3]]
+  PLOT <- rastgam_output[[3]]
 
   rast_data[distance>=min(distance) & distance<=max(distance) & !is.na(tracks) , #
             threshold_tracks:=predict.gam(gam_distbias,distance=rast_data$distance,type="response")]
@@ -349,18 +350,18 @@ distb <- function(x,y,aoi=NULL,radar=NULL,distance=NULL, verbose=T){
     }
   }
 
-  if(verbose) {
+  if(verbose){
   g <- rasterize_plot(r,aoi=aoi)
   #plotly::ggplotly(g)
   print(g)
   }
 
   setnames(rast_data, c("lon","lat"), c("x","y"))
-  track_raster <- rast(rast_data, type="xyz", crs=crs_input)
+  track_raster <- terra::rast(rast_data, type="xyz", crs=crs_input)
 
   x[,crosses_raster:=sapply(trajectory,crosses_aoi,raster=track_raster)]
 
-  return(x)
+  return(PLOT)
 }
 
 
