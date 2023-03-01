@@ -262,6 +262,7 @@ exclusion_geom <- function(x=turbines,
 #' @param exclusion_location sf-object with locations which can reliably be excluded
 #' @param exclusion_location_buffer buffer in unit of crs?
 #' @param crs crs to perform calculations in. If different from location coordinate, the location coordinate will reprojected
+#' @param verbose avoid printing messages including plotting of figures
 #'
 #' @return a polygon with inclusion zones
 #'

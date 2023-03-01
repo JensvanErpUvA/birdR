@@ -1,4 +1,4 @@
-#'@importFrom terra crs rast ext vect project res as.data.frame mask distance
+#'@importFrom terra crs rast ext vect project res as.data.frame mask distance values
 #'@importFrom plotly ggplotly
 
 #' @title rasterize_basic
@@ -57,7 +57,7 @@ rasterize_basic <- function(data=NULL, resolution=100, crs=NULL, fun='weighted',
   } else {
     if(geomtype(data) == 'lines'){
       numcells <- 1:(dim(r)[1] * dim(r)[2])
-      values(r) <- numcells
+      terra::values(r) <- numcells
 
       # CREATE DATAFRAME WITH COORDINATED OF RASTER
       r_df <- terra::as.data.frame(r,xy=TRUE)
@@ -85,8 +85,8 @@ rasterize_basic <- function(data=NULL, resolution=100, crs=NULL, fun='weighted',
 
       p[which(is.na(p$freq)),'freq'] <- 0
       R <- r
-      values(R) <- p$freq
-      NAflag(R) <- 0
+      terra::values(R) <- p$freq
+      terra::NAflag(R) <- 0
     }
   }
 
@@ -103,6 +103,7 @@ rasterize_basic <- function(data=NULL, resolution=100, crs=NULL, fun='weighted',
 #' @param crs coordinate reference system
 #' @param e minimum x value of extent
 #' @param aoi area of inclusion
+#' @param verbose boolean (TRUE/FALSE), print messages and plot results when TRUE
 #'
 #' @return a raster or list of rasters with counts per grid cell
 #'
@@ -115,24 +116,25 @@ rasterize_basic <- function(data=NULL, resolution=100, crs=NULL, fun='weighted',
 #' r <- grid_count(data, resolution=500)
 #' }
 #'
-rasterizer <- function(data=NULL, resolution=5000,var=NULL, crs=NULL, fun='weighted', e=NULL,aoi=NULL){
+rasterizer <- function(data=NULL, resolution=5000,var=NULL, crs=NULL, fun='weighted', e=NULL,aoi=NULL,verbose=T){
   if(is.null(var)){
     R <- rasterize_basic(data=data,resolution=resolution,crs=crs,fun=fun,e=e)
   } else {
-    VALS <- unique(as.vector(unlist(values(data[,var]))))
+    VALS <- unique(as.vector(unlist(terra::values(data[,var]))))
     R <- lapply(VALS, function(x) {
-      A <- subset(data, as.vector(unlist(values(data[,var]))) == x)
-      print(paste0('nrow: ',nrow(A)))
+      A <- subset(data, as.vector(unlist(terra::values(data[,var]))) == x)
+      if(verbose) message('nrow: ',nrow(A))
       R <- rasterize_basic(data=A,resolution=resolution,fun=fun,e=e,crs=crs)
-      print(paste0('sum: ',sum(values(R),na.rm=TRUE)))
-      print(paste0('variable:', x))
+      if(verbose) message('sum: ',sum(terra::values(R),na.rm=TRUE))
+      if(verbose) message('variable:', x)
       return(R)
     })
     names(R) <- VALS
   }
   set.names(R,"tracks")
 
-  print(rasterize_plot(R,aoi=aoi))
+  if(verbose) print(rasterize_plot(R,aoi=aoi))
+
 
   return(R)
 }
@@ -292,6 +294,7 @@ crosses_aoi <- function(trajectory, raster) {
 #' @param radar radar location
 #' @param distance default mid mad
 #' @param aoi area of interest
+#' @param verbose boolean (TRUE/FALSE), print messages and plot results when TRUE
 #'
 #' @return a raster with counts per grid cell
 #'
@@ -346,17 +349,18 @@ distb <- function(x,y,aoi=NULL,radar=NULL,distance=NULL){
     }
   }
 
+  if(verbose) {
   g <- rasterize_plot(r,aoi=aoi)
-
   #plotly::ggplotly(g)
   print(g)
+  }
 
   setnames(rast_data, c("lon","lat"), c("x","y"))
   track_raster <- rast(rast_data, type="xyz", crs=crs_input)
 
   x[,crosses_raster:=sapply(trajectory,crosses_aoi,raster=track_raster)]
 
-  return(plot)
+  return(x)
 }
 
 
@@ -416,7 +420,7 @@ distb <- function(x,y,aoi=NULL,radar=NULL,distance=NULL){
 #'
 #'   ## fill in number of raster cells
 #'   numcells <- 1:(dim(r)[1] * dim(r)[2])
-#'   values(r) <- numcells
+#'   terra::values(r) <- numcells
 #'
 #'   ## create dataframe with coordinates of extent raster
 #'   r_df <- terra::as.data.frame(r, xy=TRUE)

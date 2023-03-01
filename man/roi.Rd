@@ -19,6 +19,8 @@ roi(
 
 \item{crs}{crs to perform calculations in. If different from location coordinate, the location coordinate will reprojected}
 
+\item{verbose}{avoid printing messages including plotting of figures}
+
 \item{inclusion_ring}{vector of minimum and maximum distance in meters to include}
 
 \item{exclusion_angle}{vector, list or data.frame of angle-pairs to exclude from analysis}

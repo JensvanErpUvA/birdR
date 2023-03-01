@@ -11,7 +11,8 @@ rasterizer(
   crs = NULL,
   fun = "weighted",
   e = NULL,
-  aoi = NULL
+  aoi = NULL,
+  verbose = T
 )
 }
 \arguments{
@@ -26,6 +27,8 @@ rasterizer(
 \item{e}{minimum x value of extent}
 
 \item{aoi}{area of inclusion}
+
+\item{verbose}{boolean (TRUE/FALSE), print messages and plot results when TRUE}
 }
 \value{
 a raster or list of rasters with counts per grid cell
