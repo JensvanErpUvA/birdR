@@ -313,7 +313,7 @@ crosses_aoi <- function(trajectory, raster) {
 #'
 #' }
 #'
-distb <- function(x,y,aoi=NULL,radar=NULL,distance=NULL){
+distb <- function(x,y,aoi=NULL,radar=NULL,distance=NULL, verbose=T){
   track_raster <- y
   crs_input <-terra::crs(track_raster)
 
