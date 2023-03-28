@@ -114,61 +114,57 @@ fix_trajectorytime <- function(tracks){
 movement <- function(x,
                      metrics=c('n','duration', 'length', 'groundspeed', 'displacement', 'direction','dot'),
                      crs=loc_epsg){
-  TRACKS <- x
-  VAR <- metrics
   ## List all possible variables to compute
-  vars_all <- c('n','duration', 'length', 'groundspeed', 'displacement', 'direction','dot')
+  metrics_all <- c('n','duration', 'length', 'groundspeed', 'displacement', 'direction','dot')
 
   ## Number of points in the track
-  if(length(VAR[grepl('n|displacement|direction|dot',VAR)]) > 0){
-    TRACKS[,n := sapply(trajectory_time, length)]
+  if(length(metrics[grepl('n|displacement|direction|dot',metrics)]) > 0){
+    x[,n := sapply(trajectory_time, length)]
     print('Computed number of points')
   }
 
   ## Duration (seconds)
-  if(length(VAR[grepl('duration|groundspeed|dot',VAR)]) > 0){
-    TRACKS[,duration := as.numeric(timestamp_end-timestamp_start)]
+  if(length(metrics[grepl('duration|groundspeed|dot',metrics)]) > 0){
+    x[,duration := as.numeric(timestamp_end-timestamp_start)]
     print('Computed duration')
   }
 
   ## Length (metres)
-  if(length(VAR[grepl('length|groundspeed',VAR)]) > 0){
-    TRACKS[,length := as.numeric(st_length(st_transform(trajectory, crs=crs)))]
+  if(length(metrics[grepl('length|groundspeed',metrics)]) > 0){
+    x[,length := as.numeric(st_length(st_transform(trajectory, crs=crs)))]
     print('Computed length')
   }
 
   ## Groundspeed (metres per second)
-  if(length(VAR[grepl('groundspeed',VAR)]) > 0){
-    TRACKS[,groundspeed := length/duration]
+  if(length(metrics[grepl('groundspeed',metrics)]) > 0){
+    x[,groundspeed := length/duration]
     print('Computed groundspeed')
   }
 
   ## Displacement (metres)
-  if(length(VAR[grepl('displacement|dot',VAR)]) > 0){
-    TRACKS[,displacement := mapply(get_displacement, trajectory, n)]
+  if(length(metrics[grepl('displacement|dot',metrics)]) > 0){
+    x[,displacement := mapply(get_displacement, trajectory, n)]
     print('Computed displacement')
   }
 
   ## Direction (degrees North)
-  if(length(VAR[grepl('direction',VAR)]) > 0){
-    TRACKS[,direction := mapply(get_direction, trajectory, n)]
+  if(length(metrics[grepl('direction',metrics)]) > 0){
+    x[,direction := mapply(get_direction, trajectory, n)]
     print('Computed direction')
   }
 
   ## Displacement over time (dot, metres per second)
-  if(length(VAR[grepl('dot',VAR)]) == 1){
-    TRACKS[,dot:=displacement/duration]
+  if(length(metrics[grepl('dot',metrics)]) == 1){
+    x[,dot:=displacement/duration]
   }
 
-  # Variables that we do not want to include are removed again
-  exclude <- vars_all[!vars_all %in% VAR] # see here if not working https://stackoverflow.com/questions/9202413/how-do-you-delete-a-column-by-name-in-data-table
+  ## Variables that are not requested but were needed for calculations are removed again
+  exclude <- metrics_all[!metrics_all %in% metrics]
+  ##Ssee here if not working https://stackoverflow.com/questions/9202413/how-do-you-delete-a-column-by-name-in-data-table
   if(length(exclude) > 0){
-    TRACKS[, c(exclude):=NULL]  # remove columns that are used for calculations but should not be in output
-    print(paste0('Removed columns: ',exclude, collapse=' '))
-  } else {
-    print(paste0('Removed columns: ',0, collapse=' '))
+    x[, c(exclude):=NULL]  ## Remove columns that are used for calculations but should not be in output
   }
-  return(TRACKS)
+  return(x)
 }
 
 
