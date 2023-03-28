@@ -63,6 +63,34 @@ get_airspeed <- function(groundspeed,
   return(airspeed)
 }
 
+# TODO This function should be moved to uvaRR
+#' @title fix_trajectorytime
+#' @name fix_trajectorytime
+#' @description Converts the RR trajectory time, which is given as long character, to a vector of integers
+#'
+#' @param tracks dataset of tracks (data.table) with trajectory_time column.
+#'
+#'
+#'
+#' @return Returns the track data.table with converted trajectory_time
+#'
+#' @details
+#'
+#' @export
+#'
+#' @examples
+fix_trajectorytime <- function(tracks){
+  ## In RR system track durations per plot are given as a long character string, pull apart and make into list of numbers
+
+  tracks[,trajectory_time:=lapply(
+    strsplit(
+      substr(trajectory_time,2,nchar(trajectory_time)-1),
+      split = ','),
+    as.double)
+  ]
+  return(tracks)
+}
+
 #' @title movement
 #' @name movement
 #' @description annotate the trajectory with movement data
@@ -90,23 +118,6 @@ movement <- function(x,
   # all possible variables to compute
   vars_all <- c('n','duration', 'length', 'groundspeed', 'displacement', 'direction','dot')
 
-  ## In RR system track durations per plot are given as a long character string, pull apart and make into list of numbers
-
-  ## JUTS ANOTHER TEST
-
-  ## THIS IS ROBIN SPECIFIC SO SHOULD ONLY BE PERFORMED FOR ROBIN
-  TRACKS[,traj_time:=lapply(
-    strsplit(
-      substr(trajectory_time,2,nchar(trajectory_time)-1),
-      split = ','),
-    as.double)
-  ]
-
-
-  TRACKS[,"trajectory_time":=NULL]
-  setnames(TRACKS,"traj_time","trajectory_time")
-
-
   ## Number of points in the track
   TRACKS[,n := sapply(trajectory_time, length)]
 
@@ -128,27 +139,27 @@ movement <- function(x,
 
   # displacement
   if(length(VAR[grepl('displacement|dot',VAR)]) > 0){
-  TRACKS[,displacement := mapply(get_displacement, trajectory, n)]
-  print('computed displacement')
+    TRACKS[,displacement := mapply(get_displacement, trajectory, n)]
+    print('computed displacement')
   }
 
   # direction
   if(length(VAR[grepl('direction',VAR)]) > 0){
-  TRACKS[,direction := mapply(get_direction, trajectory, n)]
-  print('computed direction')
+    TRACKS[,direction := mapply(get_direction, trajectory, n)]
+    print('computed direction')
   }
 
   if(length(VAR[grepl('dot',VAR)]) == 1){
-  TRACKS[,dot:=displacement/duration]
+    TRACKS[,dot:=displacement/duration]
   }
 
   # Variables that we do not want to include are removed again
   exclude <- vars_all[!vars_all %in% VAR] # see here if not working https://stackoverflow.com/questions/9202413/how-do-you-delete-a-column-by-name-in-data-table
   if(length(exclude) > 0){
-  TRACKS[, c(exclude):=NULL]  # remove columns that are used for calculations but should not be in output
-  print(paste0('removed columns: ',exclude, collapse=' '))
+    TRACKS[, c(exclude):=NULL]  # remove columns that are used for calculations but should not be in output
+    print(paste0('removed columns: ',exclude, collapse=' '))
   } else {
-  print(paste0('removed columns: ',0, collapse=' '))
+    print(paste0('removed columns: ',0, collapse=' '))
   }
   return(TRACKS)
 }
