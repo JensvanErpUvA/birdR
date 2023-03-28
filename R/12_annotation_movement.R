@@ -93,15 +93,16 @@ fix_trajectorytime <- function(tracks){
 
 #' @title movement
 #' @name movement
-#' @description annotate the trajectory with movement data
+#' @description Annotate metrics to a track data.table. The function requires trajectory, trajectory_time, timestamp_start and timestamp_end.
+#' Metrics are in meters (lengt/displacement), seconds (duration), meters per second (groundspeed/dot), and degreees North (direction).
 #'
-#' @param x sf object with tracks
-#' @param metrics vector with movement metrics to add to tracks
-#' @param crs
+#' @param x data.table with tracks
+#' @param metrics character vector with movement metrics to add to tracks
+#' @param crs local coordinate reference system as epsg
 #'
 #'
 #'
-#' @return returns annotated trajectories with movement information
+#' @return Returns annotated data.table with movement information.
 #'
 #' @details
 #'
@@ -111,44 +112,50 @@ fix_trajectorytime <- function(tracks){
 #'
 #'
 movement <- function(x,
-                     metrics=c('n','duration', 'length', 'groundspeed', 'displacement', 'direction','dot'), # NOTE maybe timestamp_start and timestamp_end can be added as well
+                     metrics=c('n','duration', 'length', 'groundspeed', 'displacement', 'direction','dot'),
                      crs=loc_epsg){
   TRACKS <- x
   VAR <- metrics
-  # all possible variables to compute
+  ## List all possible variables to compute
   vars_all <- c('n','duration', 'length', 'groundspeed', 'displacement', 'direction','dot')
 
   ## Number of points in the track
-  TRACKS[,n := sapply(trajectory_time, length)]
-
-  ## trajectory timestamp_start, timestamp_end
-  # NOTE if timestamp_end and timestamp_start does not exist return error and ask to create variables? Alternative
+  if(length(VAR[grepl('n|displacement|direction|dot',VAR)]) > 0){
+    TRACKS[,n := sapply(trajectory_time, length)]
+    print('Computed number of points')
+  }
 
   ## Duration (seconds)
-  TRACKS[,duration := as.numeric(timestamp_end-timestamp_start)]
-  print('computed duration')
+  if(length(VAR[grepl('duration|groundspeed|dot',VAR)]) > 0){
+    TRACKS[,duration := as.numeric(timestamp_end-timestamp_start)]
+    print('Computed duration')
+  }
+
   ## Length (metres)
-  TRACKS[,length := as.numeric(st_length(st_transform(trajectory, crs=crs)))]
-  print('computed length')
+  if(length(VAR[grepl('length|groundspeed',VAR)]) > 0){
+    TRACKS[,length := as.numeric(st_length(st_transform(trajectory, crs=crs)))]
+    print('Computed length')
+  }
 
   ## Groundspeed (metres per second)
   if(length(VAR[grepl('groundspeed',VAR)]) > 0){
     TRACKS[,groundspeed := length/duration]
-    print('computed groundspeed')
+    print('Computed groundspeed')
   }
 
-  # displacement
+  ## Displacement (metres)
   if(length(VAR[grepl('displacement|dot',VAR)]) > 0){
     TRACKS[,displacement := mapply(get_displacement, trajectory, n)]
-    print('computed displacement')
+    print('Computed displacement')
   }
 
-  # direction
+  ## Direction (degrees North)
   if(length(VAR[grepl('direction',VAR)]) > 0){
     TRACKS[,direction := mapply(get_direction, trajectory, n)]
-    print('computed direction')
+    print('Computed direction')
   }
 
+  ## Displacement over time (dot, metres per second)
   if(length(VAR[grepl('dot',VAR)]) == 1){
     TRACKS[,dot:=displacement/duration]
   }
@@ -157,9 +164,9 @@ movement <- function(x,
   exclude <- vars_all[!vars_all %in% VAR] # see here if not working https://stackoverflow.com/questions/9202413/how-do-you-delete-a-column-by-name-in-data-table
   if(length(exclude) > 0){
     TRACKS[, c(exclude):=NULL]  # remove columns that are used for calculations but should not be in output
-    print(paste0('removed columns: ',exclude, collapse=' '))
+    print(paste0('Removed columns: ',exclude, collapse=' '))
   } else {
-    print(paste0('removed columns: ',0, collapse=' '))
+    print(paste0('Removed columns: ',0, collapse=' '))
   }
   return(TRACKS)
 }
