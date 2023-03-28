@@ -15,22 +15,22 @@
 #'
 #'
 create_location <- function(location,crs, verbose=T){
-if(class(location)[1] == 'numeric'){ # create radar location
-  location <- sf::st_sfc(sf::st_point(location),crs=4326)
-  if(verbose){
-  message(paste0('coordinates are converted to sfc_POINT EPSG:4326.\nwarning: If input coordinates are not 4326, please input a geometry with the correct CRS as location-argument. \ne.g. st_sfc(st_point(location),crs=',loc_epsg,')'))
-  }
+  if(class(location)[1] == 'numeric'){ # create radar location
+    location <- sf::st_sfc(sf::st_point(location),crs=4326)
+    if(verbose){
+      message(paste0('coordinates are converted to sfc_POINT EPSG:4326.\nwarning: If input coordinates are not 4326, please input a geometry with the correct CRS as location-argument. \ne.g. st_sfc(st_point(location),crs=',loc_epsg,')'))
+    }
   }
 
-#### check whether a location is EPSG 4326 and convert to local to make calculations in a metric system ####
-input_crs <- st_crs(location)$input
-if(!grepl(crs,input_crs)){ # input_crs == 'EPSG:4326'
-  location <- sf::st_transform(location, crs=crs)
-  if(verbose){
-  message(paste0('coordinates are reprojected to local projection system for further calculations: EPSG:' , crs))
+  #### check whether a location is EPSG 4326 and convert to local to make calculations in a metric system ####
+  input_crs <- st_crs(location)$input
+  if(!grepl(crs,input_crs)){ # input_crs == 'EPSG:4326'
+    location <- sf::st_transform(location, crs=crs)
+    if(verbose){
+      message(paste0('coordinates are reprojected to local projection system for further calculations: EPSG:' , crs))
+    }
   }
-}
-return(list(location,input_crs))
+  return(list(location,input_crs))
 }
 
 #' @title inclusion_ring
@@ -418,8 +418,11 @@ roi <- function(location=NULL,
     attr_location_crs <- attr(area_of_inclusion, 'location_crs')
     attr_distance <- attr(area_of_inclusion, 'distance')
 
-    g  <- ggplot(area_of_inclusion) + geom_sf() + ggtitle('inclusion ring')
-    print(g)
+    if(verbose){
+      g  <- ggplot(area_of_inclusion) + geom_sf() + ggtitle('inclusion ring')
+      print(g)
+    }
+
   } else {
     area_of_inclusion <- NULL
   }
@@ -437,16 +440,18 @@ roi <- function(location=NULL,
     }
 
     for(i in 1:nrow(excl_angles)){
-    blocked_triangle <- exclusion_angle(location=location,
-                                        angles=excl_angles[i,],
-                                        distmax=max(distance),
-                                        crs=crs,
-                                        verbose=verbose)
-    ## Substract the triangle from the donut
-    area_of_inclusion <- st_difference(area_of_inclusion, blocked_triangle)
+      blocked_triangle <- exclusion_angle(location=location,
+                                          angles=excl_angles[i,],
+                                          distmax=max(distance),
+                                          crs=crs,
+                                          verbose=verbose)
+      ## Substract the triangle from the donut
+      area_of_inclusion <- st_difference(area_of_inclusion, blocked_triangle)
 
-    g  <- ggplot(area_of_inclusion) + geom_sf() + ggtitle('exclusion angles')
-    print(g)
+      if(verbose){
+        g  <- ggplot(area_of_inclusion) + geom_sf() + ggtitle('exclusion angles')
+        print(g)
+      }
     }
     attr(area_of_inclusion,'exclusion_angles') <- as.vector(t(excl_angles))
     attr_exclusion_angles <- as.vector(t(excl_angles))
@@ -464,47 +469,48 @@ roi <- function(location=NULL,
     }
 
     for(i in 1:length(excl_geom)){
-    buffered_geom <- exclusion_geom(x=excl_geom[[i]],
-                                    buffer=excl_buffer[[i]],
-                                    crs=crs,
-                                    verbose=verbose)
-    crs_input <- st_crs(area_of_inclusion)$input
-    crs_excl <- st_crs(buffered_geom)$input
-    if(crs_input != crs_excl){
-      buffered_geom <- st_transform(buffered_geom, crs_input)
-    }
+      buffered_geom <- exclusion_geom(x=excl_geom[[i]],
+                                      buffer=excl_buffer[[i]],
+                                      crs=crs,
+                                      verbose=verbose)
+      crs_input <- st_crs(area_of_inclusion)$input
+      crs_excl <- st_crs(buffered_geom)$input
+      if(crs_input != crs_excl){
+        buffered_geom <- st_transform(buffered_geom, crs_input)
+      }
 
-    ## Substract the turbine areas
-    area_of_inclusion <- sf::st_difference(area_of_inclusion, buffered_geom)
-
-    g  <- ggplot(area_of_inclusion) + geom_sf() + ggtitle('exclusion geom')
-    print(g)
+      ## Substract the turbine areas
+      area_of_inclusion <- sf::st_difference(area_of_inclusion, buffered_geom)
+      if(verbose){
+        g  <- ggplot(area_of_inclusion) + geom_sf() + ggtitle('exclusion geom')
+        print(g)
+      }
     }
     attr(area_of_inclusion,'exclusion_geom') <- gg
     attr(area_of_inclusion,'exclusion_buffer') <- bb
 
   }
 
-  if(!is.null(area_of_inclusion)){
-  location <- create_location(location,crs=crs,verbose=F)
-  g  <- ggplot(area_of_inclusion) +
-    geom_sf() +
-    geom_sf(data=location[[1]],aes(col='radar')) +
-    ggtitle('area of inclusion') +
-    labs(x="Longitude", y="Latitude",colour='') +
-    theme_minimal()
+  if(!is.null(area_of_inclusion & verbose)){
+    location <- create_location(location,crs=crs,verbose=F)
+    g  <- ggplot(area_of_inclusion) +
+      geom_sf() +
+      geom_sf(data=location[[1]],aes(col='radar')) +
+      ggtitle('area of inclusion') +
+      labs(x="Longitude", y="Latitude",colour='') +
+      theme_minimal()
 
 
-  print(g)
+    print(g)
   }
 
   if(!is.null(distance)){
-  attr(area_of_inclusion,'location')<-attr_location
-  attr(area_of_inclusion,'location_crs')<-attr_location_crs
-  attr(area_of_inclusion,'distance')<-attr_distance
+    attr(area_of_inclusion,'location')<-attr_location
+    attr(area_of_inclusion,'location_crs')<-attr_location_crs
+    attr(area_of_inclusion,'distance')<-attr_distance
   }
   if(!is.null(excl_angles)){
-  attr(area_of_inclusion,'exclusion_angles')<-attr_exclusion_angles
+    attr(area_of_inclusion,'exclusion_angles')<-attr_exclusion_angles
   }
 
   return(area_of_inclusion)
