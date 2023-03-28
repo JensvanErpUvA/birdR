@@ -1,50 +1,51 @@
 #'@importFrom data.table setnames
-#'@importFrom fossil deg.dist
-#'@importFrom geosphere bearingRhumb
+#'@importFrom geosphere bearingRhumb distHaversine
 #'@importFrom sf st_coordinates st_length st_transform
 #'
 #'@title get_displacement
 #' @name get_displacement
-#' @description calculate displacement using a vector of track geometries and a vector with the number of locations in a track
+#' @description Calculate track displacement (from start to end of track) using the Haversine formula.
+#' The Haversine formula assumes a spherical earth, so a slight error on actual (max ~0.5%) is expected
+#' The Earth's arithmetic mean radius is taken, as distHaversine uses nomrnal equatorial Earth radius by default which introduces larger errors
 #'
-#' @param trajectory trajectory column
-#' @param n number of points
+#' @param trajectory track trajectory as st_LINESTRING in wgs84 projection (lon/lat)
+#' @param n number of points in the track
 #'
-#'
+#' @return Returns the track displacement in metres
 #'
 get_displacement <- function(trajectory, n){ # NOTE this functions is not exported and only used internally
-  longs <- st_coordinates(trajectory)[c(1,n),1]
-  lats <- st_coordinates(trajectory)[c(1,n),2]
+  p1 <- st_coordinates(trajectory)[1,1:2]
+  p2 <- st_coordinates(trajectory)[n,1:2]
 
-  return(deg.dist(longs[1], lats[1], longs[2], lats[2])*1000)
+  return(distHaversine(p1,p2,r=6371001))
 }
 
 #'@title get_direction
 #' @name get_direction
-#' @description calculate direction using a vector of track geometries and a vector with the number of locations in a track
+#' @description Calculate track direction (from start to end of track) along a rhumb line
 #'
-#' @param trajectory trajectory column
-#' @param n number of points
+#' @param trajectory track trajectory as st_LINESTRING in wgs84 projection (lon/lat)
+#' @param n number of points in the track
 #'
-#'
+#' @return Returns the track direction in radians from North
 #'
 get_direction <- function(trajectory, n){ # NOTE this function is not exported and only used internally
-  longs <- st_coordinates(trajectory)[c(1,n),1]
-  lats<- st_coordinates(trajectory)[c(1,n),2]
+  p1 <- st_coordinates(trajectory)[1,1:2]
+  p2 <- st_coordinates(trajectory)[n,1:2]
 
-  return(bearingRhumb(c(longs[1], lats[1]), c(longs[2], lats[2]))/180*pi)
+  return(bearingRhumb(p1, p2)/180*pi)
 }
 
 #'@title get_airspeed
 #' @name get_airspeed
-#' @description calculate airspeed using u- and v-component, average groundspeed and direction
+#' @description Calculates average airspeed using u- and v- windcomponents, average groundspeed and average track direction
 #'
-#' @param groundspeed groundspeed
-#' @param direction direction
-#' @param wind_u wind u / wind speed
-#' @param wind_v wind v / wind direction
+#' @param groundspeed groundspeed in metres per second
+#' @param direction direction in radians from North
+#' @param wind_u wind u-component in metres per second
+#' @param wind_v wind v-component in metres per second
 #'
-#' @return airspeed in meter per second
+#' @return Returns average airspeed in meter per second
 #'
 #' @export
 #'
@@ -52,13 +53,15 @@ get_airspeed <- function(groundspeed,
                          direction,
                          wind_u,
                          wind_v){
-  ## Calculate total displacement on the x and y axis from the average groundspeed and direction of each track
+  ## Calculate displacement on the x and y axis from the average groundspeed and direction of each track
   disp_x <- groundspeed*sin(direction)
   disp_y <- groundspeed*cos(direction)
 
+  ## Get discplacement relative to air by subtracting wind components
   air_x <- disp_x-wind_u
   air_y <- disp_y-wind_v
 
+  ## Calculate total airspeed
   airspeed <- sqrt((air_x^2) + (air_y^2))
   return(airspeed)
 }
@@ -94,7 +97,7 @@ fix_trajectorytime <- function(tracks){
 #' @title movement
 #' @name movement
 #' @description Annotate metrics to a track data.table. The function requires trajectory, trajectory_time, timestamp_start and timestamp_end.
-#' Metrics are in meters (lengt/displacement), seconds (duration), meters per second (groundspeed/dot), and degreees North (direction).
+#' Metrics are in meters (lengt/displacement), seconds (duration), meters per second (groundspeed/dot), and radians North (direction).
 #'
 #' @param x data.table with tracks
 #' @param metrics character vector with movement metrics to add to tracks
@@ -147,7 +150,7 @@ movement <- function(x,
     print('Computed displacement')
   }
 
-  ## Direction (degrees North)
+  ## Direction (radians North)
   if(length(metrics[grepl('direction',metrics)]) > 0){
     x[,direction := mapply(get_direction, trajectory, n)]
     print('Computed direction')
